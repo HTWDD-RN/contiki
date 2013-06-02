@@ -17,6 +17,14 @@ AVR        = clock.c mtarch.c eeprom.c flash.c rs232.c leds-arch.c watchdog.c rt
 ELFLOADER  = elfloader.c elfloader-avr.c symtab-avr.c
 TARGETLIBS = random.c leds.c
 
+ifdef I2C
+### Add the directories for the I2C implementation
+### added by Angelos Drossos <angelos.drossos@gmail.com>
+CONTIKI_CPU_DIRS            += dev/i2c
+CONTIKI_TARGET_SOURCEFILES  += i2c-dev.c
+CFLAGS                      += -std=c99
+endif
+
 ifdef USB
 ### Add the directories for the USB stick and remove the default rs232 driver
 CONTIKI_CPU_DIRS            += dev/usb dev/usb/serial dev/usb/rndis dev/usb/storage
