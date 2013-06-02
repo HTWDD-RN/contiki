@@ -13,14 +13,14 @@ CONTIKI_PLAT_DEFS = -DF_CPU=8000000UL -DAUTO_CRC_PADDING=2
 
 MCU=atmega128rfa1
 
-AVRDUDE_PROGRAMMER=jtag2
+#AVRDUDE_PROGRAMMER=jtag2
 
 # For usb devices, you may either use PORT=usb, or (e.g. if you have more than one
 # programmer connected) you can use the following trick to find out the serial number:
 #
 # The example is for an JTAGICE mkII used to program an ATmega128:
 # avrdude -v -P usb:xxxx -c jtag2 -p atmega128
-AVRDUDE_PORT=usb:00B000000D79
+#AVRDUDE_PORT=usb:00B000000D79
 
 
 # Additional avrdude options
