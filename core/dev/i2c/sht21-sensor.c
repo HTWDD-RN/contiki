@@ -540,12 +540,12 @@ int sht21_sensor_getLastTemperature(char *string, int string_len)
 {
 	if (!string) return -1;
 	// TODO negative temp values
-	return sprintf(string, "%3hd.%02hd [°C]\n", last_temp/100, last_temp%100);
+	return sprintf(string, "%3hd.%02hd [°C]", last_temp/100, last_temp%100);
 }
 
 int sht21_sensor_getLastelativeHumidity(char *string, int string_len)
 {
 	if (!string) return -1;
-	return sprintf(string, "%4hd.%02hd [%%RH]\n", last_rh/100, last_rh%100);
+	return sprintf(string, "%4hd.%02hd [%%RH]", last_rh/100, last_rh%100);
 }
 
