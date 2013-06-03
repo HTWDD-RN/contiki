@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Swedish Institute of Computer Science.
+ * Copyright (c) 2013, Thomas Kuehnel.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,35 +29,51 @@
  * This file is part of the Configurable Sensor Network Application
  * Architecture for sensor nodes running the Contiki operating system.
  *
- * This is a dummy non-functional dummy implementation.
- *
- *
- * -----------------------------------------------------------------
- *
- * Author  : Adam Dunkels, Joakim Eriksson, Niclas Finne, Simon Barner
- * Created : 2005-11-03
- * Updated : $Date: 2006/12/22 17:05:31 $
- *           $Revision: 1.1 $
  */
 
 #include "contiki-conf.h"
 #include "dev/leds.h"
+#include <avr/io.h>
 
-/*---------------------------------------------------------------------------*/
-void
-leds_arch_init(void)
+#define LED1 (1<<PB4)
+#define LED2 (1<<PB6)
+#define LED3 (1<<PB3)
+
+#define LEDOff(x) (PORTB |= (x))
+#define LEDOn(x) (PORTB &= ~(x))
+
+
+static unsigned char led_status = 0;
+
+void leds_arch_init(void)
 {
+    //LEDs on DDRB
+    DDRB |= LED1 | LED2 | LED3;
+    LEDOff(LED1 | LED2 | LED3);
 }
-/*---------------------------------------------------------------------------*/
-unsigned char
-leds_arch_get(void)
+
+unsigned char leds_arch_get(void)
 {
-    return 0;
+    return led_status;
 }
-/*---------------------------------------------------------------------------*/
-void
-leds_arch_set(unsigned char leds)
+
+void leds_arch_set(unsigned char leds)
 {
+    led_status = leds;
+
+    if (LEDS_GREEN & leds)
+        LEDOn(LED1);
+    else
+        LEDOff(LED1);
+
+    if (LEDS_YELLOW & leds)
+        LEDOn(LED2);
+    else
+        LEDOff(LED2);
+
+    if (LEDS_RED & leds)
+        LEDOn(LED3);
+    else
+        LEDOff(LED3);
 
 }
-/*---------------------------------------------------------------------------*/

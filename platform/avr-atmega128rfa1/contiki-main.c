@@ -90,6 +90,8 @@
 
 #include "net/rime.h"
 
+#include "dev/leds.h"
+
 /* Track interrupt flow through mac, rdc and radio driver */
 //#define DEBUGFLOWSIZE 32
 #if DEBUGFLOWSIZE
@@ -384,6 +386,7 @@ uint8_t i;
 #endif
 #endif /* ANNOUNCE_BOOT */
 
+  leds_init();
 #if RF230BB_CONF_LEDONPORTE1
   /* NB: PORTE1 conflicts with UART0 */
   DDRE|=(1<<DDE1);  //set led pin to output (Micheal Hatrtman board)

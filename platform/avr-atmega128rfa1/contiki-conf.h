@@ -77,6 +77,9 @@ void clock_adjust_ticks(clock_time_t howmany);
 /* The sleep timer requires the crystal and adds a TIMER2 interrupt routine if not already define by clock.c */
 #define AVR_CONF_USE32KCRYSTAL 0
 
+/* added LEDs to PORTB */
+#define PLATFORM_HAS_LEDS 1
+
 /* Michael Hartman's protobyte board has LED on PORTE1, used for radio on indication */
 /* However this results in disabling UART0. */
 #define RF230BB_CONF_LEDONPORTE1  0
