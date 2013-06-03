@@ -91,7 +91,7 @@ CONTIKI_SOURCEFILES += rs232_project.c
 #=======================================================================
 
 # custom avrdude command
-AVRDUDE = sudo avrdude
+#AVRDUDE = sudo avrdude
 #AVRDUDE_PORT = usb
 #AVRDUDE_PROGRAMMER = dragon_jtag
 
