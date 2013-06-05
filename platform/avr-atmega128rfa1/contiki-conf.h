@@ -80,6 +80,9 @@ void clock_adjust_ticks(clock_time_t howmany);
 /* added LEDs to PORTB */
 #define PLATFORM_HAS_LEDS 1
 
+/* add button on PORTB7 */
+#define PLATFORM_HAS_BUTTON 1
+
 /* Michael Hartman's protobyte board has LED on PORTE1, used for radio on indication */
 /* However this results in disabling UART0. */
 #define RF230BB_CONF_LEDONPORTE1  0
