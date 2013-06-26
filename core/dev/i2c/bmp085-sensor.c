@@ -200,7 +200,7 @@ static int value(int measurement_type)
 		if (!succ) break;
 		// save pressure
 		printf("readed Pressure: %7ld [0.1 hPa] = %5ld.%02ld [hPa]\n",
-						pressure, pressure/10, (pressure%10)*10);
+						pressure, pressure/100, (pressure%100)*100);
 		break;
 	case BMP085_SENSOR_PRESSURE_AND_TEMPERATURE:
 		// read current pressure and temperature
