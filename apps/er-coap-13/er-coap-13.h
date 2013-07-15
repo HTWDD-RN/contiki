@@ -61,6 +61,10 @@
 #define COAP_TOKEN_LEN                       8 /* The maximum number of bytes for the Token */
 #define COAP_MAX_ACCEPT_NUM                  2 /* The maximum number of accept preferences to parse/store */
 
+#ifdef CONDITION
+#define COAP_MAX_CONDITION_LEN								5 /* The maximum number of bytes for the Condition option*/
+#endif
+
 #define COAP_HEADER_VERSION_MASK             0xC0
 #define COAP_HEADER_VERSION_POSITION         6
 #define COAP_HEADER_TYPE_MASK                0x30
@@ -172,6 +176,11 @@ typedef enum {
   COAP_OPTION_MAX_AGE = 14,       /* 0-4 B */
   COAP_OPTION_URI_QUERY = 15,     /* 0-270 B */
   COAP_OPTION_ACCEPT = 16,        /* 0-2 B */
+
+#ifdef CONDITION
+  COAP_OPTION_CONDITION = 18,	  /* 1-5 B, Conditional observe */
+#endif
+
   COAP_OPTION_TOKEN = 19,         /* 1-8 B */
   COAP_OPTION_LOCATION_QUERY = 20, /* 1-270 B */
   COAP_OPTION_BLOCK2 = 23,        /* 1-3 B */
@@ -251,6 +260,11 @@ typedef struct {
   size_t uri_query_len;
   const char *uri_query;
   uint8_t if_none_match;
+
+#ifdef CONDITION
+	uint8_t condition_len;
+  uint8_t condition[COAP_MAX_CONDITION_LEN]; /* Conditional observe */
+#endif
 
   uint16_t payload_len;
   uint8_t *payload;

@@ -225,6 +225,12 @@ coap_receive(void)
           PRINTF("Received Ping\n");
           coap_error_code = PING_RESPONSE;
         }
+		else if(message->type == COAP_TYPE_CON)	/*(Cond) Observe Notification */
+		{
+			coap_init_message(message, COAP_TYPE_ACK, 0, message->mid);
+			coap_send_message(&UIP_IP_BUF->srcipaddr, UIP_UDP_BUF->srcport, uip_appdata, 
+								coap_serialize_message(message, uip_appdata));
+		}
         else if (message->type==COAP_TYPE_ACK)
         {
           /* Transactions are closed through lookup below */
