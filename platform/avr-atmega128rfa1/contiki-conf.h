@@ -85,7 +85,7 @@ void clock_adjust_ticks(clock_time_t howmany);
 
 /* Michael Hartman's protobyte board has LED on PORTE1, used for radio on indication */
 /* However this results in disabling UART0. */
-#define RF230BB_CONF_LEDONPORTE1  0
+#define RF230BB_CONF_LEDONPORTE1  1
 
 /* COM port to be used for SLIP connection. This is usually UART0, but see above */
 #if RF230BB_CONF_LEDONPORTE1
