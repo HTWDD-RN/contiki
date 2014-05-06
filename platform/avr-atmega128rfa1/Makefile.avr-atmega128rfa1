@@ -28,6 +28,9 @@ MCU=atmega128rfa1
 AVRDUDE_OPTIONS=-V
 AVRDUDE_MCU=m128rfa1
 
+ifeq ($(UIP_CONF_IPV6),1)
+  CFLAGS += -DUIP_CONF_IPV6=1
+endif
 
 include $(CONTIKIAVR)/Makefile.avr
 include $(CONTIKIAVR)/radio/Makefile.radio
