@@ -1,0 +1,73 @@
+########################################################################
+# Makefile to include Sensor Process
+########################################################################
+
+#=======================================================================
+# I2C communication
+#=======================================================================
+
+# avtivate I2C communications on platform (includes source files)
+I2C = 1
+
+# select I2C bus speed, typ.: 10000UL until 100000UL --> 10 - 100kHz
+#CFLAGS += -DF_SCL=10000UL # 10kHz
+CFLAGS += -DF_SCL=100000UL # 100kHz, tested
+
+# activate I2C Debug Prints
+#CFLAGS += -DI2C_DEBUG=1
+
+#=======================================================================
+# SENSORS Interface (core) and Sensor Process (project)
+#=======================================================================
+
+# sources (core)
+CONTIKI_SOURCEFILES += sensors.c
+
+# sources (project)
+#CONTIKI_SOURCEFILES += sensor-control.c
+
+# activate Process Sensor Control Debug Prints
+#CFLAGS += -DSENSOR_CONTROL_DEBUG=1
+
+#=======================================================================
+# TSL 2561
+#=======================================================================
+
+# set address (see core/dev/i2c/tsl2561-sensor.h)
+CFLAGS += -DTSL2561_ADDR=TSL2561_ADDR_FLOAT
+#CFLAGS += -DTSL2561_ADDR=TSL2561_ADDR_CONNTECTED_VDD
+#CFLAGS += -DTSL2561_ADDR=TSL2561_ADDR_CONNECTED_GND
+
+# sources (core/dev/i2c)
+CONTIKI_SOURCEFILES += tsl2561-sensor.c
+
+#=======================================================================
+# SHT 21
+#=======================================================================
+
+# SHT21 has only one address! (see core/dev/i2c/sht21-sensor.h)
+
+# sources (core/dev/i2c)
+CONTIKI_SOURCEFILES += sht21-sensor.c
+
+#=======================================================================
+# BMP085
+#=======================================================================
+
+# BMP085 has only one address! (see core/dev/i2c/bmp085-sensor.h)
+
+# sources (core/dev/i2c)
+CONTIKI_SOURCEFILES += bmp085-sensor.c
+
+#=======================================================================
+# BMA1280 (I2C)
+#=======================================================================
+
+# set address (see core/dev/i2c/bma180-sensor.h)
+CFLAGS += -DBMA180_SDO=BMA180_CONNECTED_VDDIO
+#CFLAGS += -DBMA180_SDO=BMA180_CONNECTED_VSS
+
+# sources (core/dev/i2c)
+CONTIKI_SOURCEFILES += bma180-sensor.c
+
+########################################################################
