@@ -50,6 +50,7 @@
 #include "net/rime/rimeaddr.h"
 #include "net/packetbuf.h"
 #include "net/uip-ds6-nbr.h"
+#include "dev/leds.h"
 
 #define DEBUG DEBUG_NONE
 #include "net/uip-debug.h"
@@ -93,6 +94,7 @@ uip_ds6_nbr_add(uip_ipaddr_t *ipaddr, uip_lladdr_t *lladdr,
     stimer_set(&nbr->reachable, 0);
     stimer_set(&nbr->sendns, 0);
     nbr->nscount = 0;
+    leds_off(LEDS_YELLOW);
     PRINTF("Adding neighbor with ip addr ");
     PRINT6ADDR(ipaddr);
     PRINTF(" link addr ");
