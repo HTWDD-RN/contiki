@@ -279,6 +279,9 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_DS6_ADDR_NBU     3
 #define UIP_CONF_DS6_MADDR_NBU    0
 #define UIP_CONF_DS6_AADDR_NBU    0
+/* CCA theshold energy -91 to -61 dBm (default -77). Set this smaller than the expected minimum rssi to avoid packet collisions */
+/* The Jackdaw menu 'm' command is helpful for determining the smallest ever received rssi */
+#define RF230_CONF_CCA_THRES    -90
 
 
 #elif 1  /* cx-mac radio cycling */
