@@ -234,8 +234,9 @@ static struct pt pt;
 static volatile uint8_t contikimac_is_on = 0;
 static volatile uint8_t contikimac_keep_radio_on = 0;
 
-static volatile unsigned char we_are_sending = 0;
-static volatile unsigned char radio_is_on = 0;
+volatile unsigned char we_are_sending = 0;
+volatile unsigned char radio_is_on = 0;
+volatile unsigned char contikimac_ready = 0;
 
 #define DEBUG 0
 #if DEBUG
@@ -300,7 +301,7 @@ off(void)
   }
 }
 /*---------------------------------------------------------------------------*/
-static volatile rtimer_clock_t cycle_start;
+volatile rtimer_clock_t cycle_start;
 static char powercycle(struct rtimer *t, void *ptr);
 static void
 schedule_powercycle(struct rtimer *t, rtimer_clock_t time)
@@ -321,7 +322,7 @@ schedule_powercycle(struct rtimer *t, rtimer_clock_t time)
   }
 }
 /*---------------------------------------------------------------------------*/
-static void
+void
 schedule_powercycle_fixed(struct rtimer *t, rtimer_clock_t fixed_time)
 {
   int r;
@@ -491,12 +492,9 @@ powercycle(struct rtimer *t, void *ptr)
 	 ensure an occasional wake cycle or foreground processing will
 	 be blocked until a packet is detected */
 #if RDC_CONF_MCU_SLEEP
-      static uint8_t sleepcycle;
-      if((sleepcycle++ < 16) && !we_are_sending && !radio_is_on) {
-        rtimer_arch_sleep(CYCLE_TIME - (RTIMER_NOW() - cycle_start));
-      } else {
-        sleepcycle = 0;
+      if(!we_are_sending && !radio_is_on) {
         schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
+        contikimac_ready = 1;
         PT_YIELD(&pt);
       }
 #else
@@ -507,6 +505,15 @@ powercycle(struct rtimer *t, void *ptr)
   }
 
   PT_END(&pt);
+}
+/*---------------------------------------------------------------------------*/
+static void
+set_interrupt(void)
+{
+  if(contikimac_is_on) {
+    rtimer_reset(&rt, RTIMER_NOW() + 1, 1,
+                 (void (*)(struct rtimer *, void *))powercycle, NULL);
+  }
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -1079,6 +1086,7 @@ duty_cycle(void)
 const struct rdc_driver contikimac_driver = {
   "ContikiMAC",
   init,
+  set_interrupt,
   qsend_packet,
   qsend_list,
   input_packet,

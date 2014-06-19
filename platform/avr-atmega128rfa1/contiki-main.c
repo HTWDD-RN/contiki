@@ -89,6 +89,11 @@
 #endif
 
 #include "net/rime.h"
+#define CYCLE_TIME (RTIMER_ARCH_SECOND / NETSTACK_RDC_CHANNEL_CHECK_RATE)
+#include "sys/rtimer.h"
+#include "rtimer-arch.h"
+extern rtimer_clock_t cycle_start;
+extern unsigned char contikimac_ready;
 
 #include "dev/leds.h"
 
@@ -426,13 +431,27 @@ ipaddr_add(const uip_ipaddr_t *addr)
 int
 main(void)
 {
+  int nProcesses;
+  short timeToSleep;
+
 #if UIP_CONF_IPV6
   uip_ds6_nbr_t *nbr;
 #endif /* UIP_CONF_IPV6 */
   initialize();
 
   while(1) {
-    process_run();
+    nProcesses = process_run();
+#if RDC_CONF_MCU_SLEEP
+    if (nProcesses == 0 && contikimac_ready){
+      timeToSleep = CYCLE_TIME - (RTIMER_NOW() - cycle_start);
+      if (timeToSleep > 0){
+        rtimer_arch_sleep(timeToSleep);
+      }
+      contikimac_ready = 0;
+      NETSTACK_RDC.set_interrupt();
+    }
+#endif
+
     watchdog_periodic();
 
     /* Turn off LED after a while */

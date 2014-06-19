@@ -60,6 +60,8 @@ struct rdc_driver {
   /** Initialize the RDC driver */
   void (* init)(void);
 
+  void (*set_interrupt)(void);
+
   /** Send a packet from the Rime buffer  */
   void (* send)(mac_callback_t sent_callback, void *ptr);
 

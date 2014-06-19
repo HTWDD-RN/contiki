@@ -105,3 +105,16 @@ rtimer_run_next(void)
   return;
 }
 /*---------------------------------------------------------------------------*/
+int
+rtimer_reset(struct rtimer *rtimer, rtimer_clock_t time,
+             rtimer_clock_t duration,
+             rtimer_callback_t func, void *ptr)
+{
+  int first = 0;
+  rtimer->func = func;
+  rtimer->ptr = ptr;
+  rtimer->time = time;
+  rtimer_arch_schedule(time);
+  return RTIMER_OK;
+}
+/*---------------------------------------------------------------------------*/
