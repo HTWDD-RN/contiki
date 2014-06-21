@@ -84,7 +84,7 @@
 #undef SICSLOWPAN_CONF_FRAG
 #define SICSLOWPAN_CONF_FRAG	1
 
-//#define PLATFORM_HAS_SHT21
+#define PLATFORM_HAS_SHT21
 #define PLATFORM_HAS_BMP085
 
 /* Sensor nodes are not supposed to act as routers */
