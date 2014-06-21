@@ -256,6 +256,9 @@ uint8_t i;
 
   /* enable LEDS */
   leds_init();
+  leds_invert(LEDS_YELLOW);
+  leds_invert(LEDS_RED);
+  leds_invert(LEDS_GREEN);
   leds_on(LEDS_YELLOW);
 
   /* Start radio and radio receive process */
