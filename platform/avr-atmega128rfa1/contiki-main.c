@@ -92,6 +92,9 @@
 #define CYCLE_TIME (RTIMER_ARCH_SECOND / NETSTACK_RDC_CHANNEL_CHECK_RATE)
 #include "sys/rtimer.h"
 #include "rtimer-arch.h"
+
+#include "usb.h"
+
 extern rtimer_clock_t cycle_start;
 extern unsigned char contikimac_ready;
 
@@ -194,10 +197,12 @@ void initialize(void)
 #endif
 
   /* Second rs232 port for debugging or slip alternative */
-  rs232_init(RS232_PORT_1, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
+  rs232_init(RS232_PORT_1, USART_BAUD_57600,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
+  
   /* Redirect stdout */
 #if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
-  rs232_redirect_stdout(RS232_PORT_1);
+  //rs232_redirect_stdout(RS232_PORT_1);
+  usb_io_init();
 #else
   rs232_redirect_stdout(RS232_PORT_0);
 #endif
