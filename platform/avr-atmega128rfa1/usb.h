@@ -1,12 +1,18 @@
+/* Prevent double inclusion */
+#ifndef USB_H_
+#define USB_H_
 
-/* defines for usb output for dresden elektronic products */
-#define DE_USB_OUTPUT 1
-#define SENS_TERM_BOARD 1
-#define DE_RF_NODE 2
-#undef DE_PLATFORM
-//#define DE_PLATFORM SENS_TERM_BOARD
-#define DE_PLATFORM 2
+/* === INCLUDES ============================================================ */
+#include <stdio.h>      // FILE* type
 
+/* === MACROS / DEFINES ==================================================== */
+
+/*
+ * The following definitions are for deRFnode platform
+ *
+ * Due to backward compability of radio modules the USB pins are not located at one single port
+ * They are connected to different pins on radio modules, therefore another definition is required
+ */
 
 /* Port definitions which gives indication of reception of byte */
 #define USB_RXF_PIN                 (PE2)
@@ -21,9 +27,6 @@
 #define USB_TXE_PINS                (PINB)
 
 /* Port definitions for write and read access on USB */
-
-#if (!(defined REV01) | (defined REV00))
-
 #define USB_WR_PIN                  (PD3)
 #define USB_WR_PORT                 (PORTD)
 #define USB_WR_DDR                  (DDRD)
@@ -33,17 +36,6 @@
 #define USB_RD_PORT                 (PORTD)
 #define USB_RD_DDR                  (DDRD)
 #define USB_RD_PINS                 (PIND)
-#else
-#define USB_WR_PIN                  (PG1)
-#define USB_WR_PORT                 (PORTG)
-#define USB_WR_DDR                  (DDRG)
-#define USB_WR_PINS                 (PING)
-
-#define USB_RD_PIN                  (PD4)
-#define USB_RD_PORT                 (PORTD)
-#define USB_RD_DDR                  (DDRD)
-#define USB_RD_PINS                 (PIND)
-#endif
 
 /* Port definitions of data port from USB interface */
 #define USB_D0_BIT                  (0)
@@ -94,9 +86,26 @@
 #define USB_D7_DDR                  (DDRB)
 #define USB_D7_PINS                 (PINB)
 
+/* === TYPES =============================================================== */
+
+/* === PROTOTYPES ========================================================== */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void usb_io_init(void);
-uint8_t usb_keypressed22(void);
-int usb_putc_std22 (char c, FILE* dummy_file);
-int usb_getc_std22 (FILE* dummy_file);
+uint8_t usb_keypressed(void);
+int usb_putc_std (char c, FILE* dummy_file);
+int usb_getc_std (FILE* dummy_file);
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+/* === INLINE FUNCTIONS ==================================================== */
+
+
+#endif /* USB_H_ */
+
+/* EOF */

@@ -183,6 +183,9 @@ void initialize(void)
   watchdog_init();
   watchdog_start();
 
+#ifdef DE_RF_NODE
+  usb_io_init();
+#else
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
@@ -198,14 +201,15 @@ void initialize(void)
 
   /* Second rs232 port for debugging or slip alternative */
   rs232_init(RS232_PORT_1, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-  
+
   /* Redirect stdout */
 #if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
-  //rs232_redirect_stdout(RS232_PORT_1);
-  usb_io_init();
+  rs232_redirect_stdout(RS232_PORT_1);
 #else
   rs232_redirect_stdout(RS232_PORT_0);
 #endif
+#endif /* DE_RF_NODE */
+
   clock_init();
 
   if(MCUSR & (1<<PORF )) PRINTD("Power-on reset.\n");

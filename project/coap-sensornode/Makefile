@@ -8,6 +8,8 @@ WITH_COAP=13
 
 include Makefile.sensors.include
 
+CFLAGS += -DDE_RF_NODE
+
 # variable for Makefile.include
 WITH_UIP6=1
 # for some platforms

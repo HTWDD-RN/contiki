@@ -17,12 +17,8 @@ void write_usb_byte(uint8_t data);
 
 /* === GLOBALS ============================================================= */
 
-#if (DE_PLATFORM == SENS_TERM_BOARD)
-static volatile unsigned int* pUSB = (unsigned int*) USB_ADDRESS;
-#endif // (PLATFORM == SENS_TERM_BOARD)
-
-// Setup a File stream with putchar and getchar functionality over USB
-FILE usb_stream = FDEV_SETUP_STREAM(usb_putc_std22, usb_getc_std22,_FDEV_SETUP_RW);
+// Setup a File stream with putchar() and getchar() functionality over USB
+FILE usb_stream = FDEV_SETUP_STREAM(usb_putc_std, usb_getc_std,_FDEV_SETUP_RW);
 
 /* === IMPLEMENTATION ====================================================== */
 
@@ -34,36 +30,28 @@ FILE usb_stream = FDEV_SETUP_STREAM(usb_putc_std22, usb_getc_std22,_FDEV_SETUP_R
  */
 void usb_io_init(void)
 {
-
-
    /* Make sure USB_RXF and USB_TXE are inputs */
    USB_TXE_DDR  &= ~_BV(USB_TXE_PIN);
    USB_TXE_PORT |=  _BV(USB_TXE_PIN);
 
    USB_RXF_DDR  &= ~_BV(USB_RXF_PIN);
    USB_RXF_PORT |=  _BV(USB_RXF_PIN);
-   
+
    stdout = &usb_stream;                            // init standard output over USB
    //stdin  = &usb_stream;                            // init standard input over USB
-
 }
 
 /**
  * @brief Checks if a new character received.
  *
  * This is only working if platform is Sensor Terminal Board or deRFnode.
- * 
+ *
  * @return  Returns '1' if a new character is available on the FTDI USB chip
  *
  */
 uint8_t usb_keypressed(void)
 {
-#if (DE_PLATFORM == SENS_TERM_BOARD) || (DE_PLATFORM == DE_RF_NODE)
-
    return (!(USB_RXF_PINS & _BV(USB_RXF_PIN))) ? 1 : 0;
-
-#endif // (PLATFORM == SENS_TERM_BOARD) || (PLATFORM == DE_RF_NODE)
-   return 0;
 }
 
 /**
@@ -79,17 +67,12 @@ uint8_t usb_keypressed(void)
  * @return    character on the USB chip
  *
  */
-int usb_getc_std22(FILE* dummy_file)
+int usb_getc_std(FILE* dummy_file)
 {
-#if (DE_PLATFORM == SENS_TERM_BOARD) || (DE_PLATFORM == DE_RF_NODE)
-
    /* wait until new char received */
    while (USB_RXF_PINS & _BV(USB_RXF_PIN)){;}
    /* return the data */
    return(read_usb_byte());
-
-#endif // (PLATFORM == SENS_TERM_BOARD) || (PLATFORM == DE_RF_NODE)
-   return 0;
 }
 
 /**
@@ -106,19 +89,14 @@ int usb_getc_std22(FILE* dummy_file)
  * @return    char: character written to USB
  *
  */
-int usb_putc_std22(char c, FILE* dummy_file)
+int usb_putc_std(char c, FILE* dummy_file)
 {
-#if (DE_PLATFORM == SENS_TERM_BOARD) || (DE_PLATFORM == DE_RF_NODE)
-
    /* Wait for empty transmit buffer */
-   //while (USB_TXE_PINS & _BV(USB_TXE_PIN)){;}
+   while (USB_TXE_PINS & _BV(USB_TXE_PIN)){;}
    /* write the byte into the USB FIFO */
-   //write_usb_byte(c);
+   write_usb_byte(c);
    /* return the char */
    return(c);
-
-#endif // (PLATFORM == SENS_TERM_BOARD) || (PLATFORM == DE_RF_NODE)
-   return 0;
 }
 
 /**
@@ -132,36 +110,6 @@ int usb_putc_std22(char c, FILE* dummy_file)
  */
 uint8_t read_usb_byte(void)
 {
-#if (DE_PLATFORM == SENS_TERM_BOARD)
-   uint8_t data = 0;
-   /* prepare data -> all bits are inputs */
-   USB_DATA_DDR = 0x00;
-   /* prepare chip select for usb */
-   USB_DECODE_PORT &= ~_BV(USB_CS0_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS0_PIN);
-   USB_DECODE_PORT &= ~_BV(USB_CS1_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS1_PIN);
-
-   /* generate a single low / hi edge RD */
-   USB_RD_PORT |=  _BV(USB_RD_PIN);
-   USB_RD_DDR  |=  _BV(USB_RD_PIN);
-   USB_RD_PORT &= ~_BV(USB_RD_PIN);
-   /* give chip a chance to put out the data */
-   _delay_us(1);
-   /* save data */
-   data = USB_DATA_PINS;
-   /* and now back ... */
-   USB_RD_PORT |= _BV(USB_RD_PIN);
-
-   /* disable chip select */
-   USB_DECODE_PORT &= ~_BV(USB_CS0_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS0_PIN);
-   USB_DECODE_PORT &= ~_BV(USB_CS1_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS1_PIN);
-   return(data);
-
-#elif (DE_PLATFORM == DE_RF_NODE)
-
    uint8_t data = 0;
 
    /* set Data Directions to input */
@@ -202,10 +150,6 @@ uint8_t read_usb_byte(void)
    USB_RD_PORT |= _BV(USB_RD_PIN);
 
    return data;
-
-#endif // defined (PLATFORM == SENS_TERM_BOARD)
-
-   return 0;
 }
 
 
@@ -220,34 +164,6 @@ uint8_t read_usb_byte(void)
  */
 void write_usb_byte(uint8_t data)
 {
-#if (DE_PLATFORM == SENS_TERM_BOARD)
-
-   /* prepare data */
-   USB_DATA_PORT = data;
-   /* all bits are outputs */
-   USB_DATA_DDR = 0xff;
-
-   /* prepare chip select for usb */
-   USB_DECODE_PORT &= ~_BV(USB_CS0_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS0_PIN);
-   USB_DECODE_PORT &= ~_BV(USB_CS1_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS1_PIN);
-
-   /* generate a single low / hi edge WR */
-   USB_WR_PORT |= _BV(USB_WR_PIN);
-   USB_WR_DDR  |= _BV(USB_WR_PIN);
-   /* and now back ... */
-   USB_WR_PORT &= ~_BV(USB_WR_PIN);
-   USB_WR_PORT |=  _BV(USB_WR_PIN);
-
-   /* disable chip select */
-   USB_DECODE_PORT &= ~_BV(USB_CS0_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS0_PIN);
-   USB_DECODE_PORT &= ~_BV(USB_CS1_PIN);
-   USB_DECODE_DDR  |=  _BV(USB_CS1_PIN);
-
-#elif (DE_PLATFORM == DE_RF_NODE)
-
    /* set data pins, depending on character */
    if(data & _BV(USB_D0_BIT)){ USB_D0_PORT |= _BV(USB_D0_PIN);} else{ USB_D0_PORT &= ~_BV(USB_D0_PIN);}
    if(data & _BV(USB_D1_BIT)){ USB_D1_PORT |= _BV(USB_D1_PIN);} else{ USB_D1_PORT &= ~_BV(USB_D1_PIN);}
@@ -283,9 +199,5 @@ void write_usb_byte(uint8_t data)
    USB_WR_PORT |= _BV(USB_WR_PIN);
 
    /* --> data has been written */
-
-#endif // defined (PLATFORM == SENS_TERM_BOARD)
 }
-
-
 
