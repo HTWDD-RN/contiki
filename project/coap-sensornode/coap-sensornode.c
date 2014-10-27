@@ -464,7 +464,6 @@ PROCESS_THREAD(rest_server_example, ev, data)
     PRINTF("BMP085 not connected\n");
   }
 #endif
-	NETSTACK_MAC.off(1);
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();
