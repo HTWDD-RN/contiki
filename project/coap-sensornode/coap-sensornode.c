@@ -471,6 +471,82 @@ interntemp_periodic_handler(resource_t *r)
 }
 #endif /* #if defined(__AVR_ATmega128RFA1__) */
 
+/* A simple getter example. Returns the reading from internal temperatur sensor of mega128rfa1 with a simple etag */
+PERIODIC_RESOURCE(battery, METHOD_GET, "sensors/battery", "title=\"voltage in [V] of batteries\";rt=\"Voltage-V\";if=\"core.s\";obs", 60*CLOCK_SECOND);
+void
+battery_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  char tempstr[20] = "ERROR";
+  // Wert von ADC0  
+  int adcVal = readADC(PF0);
+  // gemessene Spannung an ADC0 in V auf 2 nachkommastellen genau (festkomma arithmetik), ref Spannung = 1.6V
+  unsigned long int adc_in_v = ((uint32_t)adcVal * 160) / 1023;
+  // Spannungsteilerformel nach Vin umgestellt mit R1=820kOhm, R2=220kOhm
+  unsigned int voltage = (adc_in_v * 1040) / 220;
+  // alternativ, aber ungenauer im Ergebnis
+  // uint16_t mVolt = (((double)1040/(double)220)*1.6)*ADC;
+  snprintf(tempstr, 20, "%2d.%02d [V]", voltage/100, voltage%100);
+  if (strcmp(tempstr, "ERROR") == 0)
+    REST.set_response_status(response, REST.status.INTERNAL_SERVER_ERROR);
+
+  const uint16_t *accept = NULL;
+  int num = REST.get_header_accept(request, &accept);
+
+  if ((num==0) || (num && accept[0]==REST.type.TEXT_PLAIN))
+  {
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "%s", tempstr);
+
+    REST.set_response_payload(response, (uint8_t *)buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_XML))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_XML);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "<voltage value=\"%s\"/>", tempstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_JSON))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_JSON);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "{'voltage':'%s'}", tempstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else
+  {
+    REST.set_response_status(response, REST.status.NOT_ACCEPTABLE);
+    const char *msg = "Supporting content-types text/plain, application/xml, and application/json";
+    REST.set_response_payload(response, msg, strlen(msg));
+  }
+}
+
+void
+battery_periodic_handler(resource_t *r)
+{
+  static uint16_t obs_counter = 0;
+  char tempstr[20] = "ERROR";
+  // Wert von ADC0  
+  int adcVal = readADC(PF0);
+  // gemessene Spannung an ADC0 in V auf 2 nachkommastellen genau (festkomma arithmetik)
+  unsigned long int adc_in_v = ((uint32_t)adcVal * 160) / 1023;
+  // Spannungsteilerformel nach Vin umgestellt mit R1=820kOhm, R2=220kOhm
+  unsigned int voltage = (adc_in_v * 1040) / 220;
+
+  snprintf(tempstr, 20, "%2d.%02d [V]", voltage/100, voltage%100);
+  printf("%s\n", tempstr);
+
+  /* Build notification. */
+  coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
+  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_set_payload(notification, tempstr, strlen(tempstr));
+  if (strcmp(tempstr, "ERROR") == 0)
+    coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
+
+  /* Notify the registered observers with the given message type, observe option, and payload. */
+  REST.notify_subscribers(r, obs_counter, notification);
+}
+
 PROCESS(rest_server_example, "CoAP Sensornode");
 AUTOSTART_PROCESSES(&rest_server_example);
 
@@ -534,6 +610,7 @@ PROCESS_THREAD(rest_server_example, ev, data)
 #if defined(__AVR_ATmega128RFA1__)
 	rest_activate_periodic_resource(&periodic_resource_interntemp);
 #endif
+  rest_activate_periodic_resource(&periodic_resource_battery);
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();
