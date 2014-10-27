@@ -32,6 +32,9 @@
 #ifndef __PROJECT_ERBIUM_CONF_H__
 #define __PROJECT_ERBIUM_CONF_H__
 
+/* deRFnode board */
+#define DE_RF_NODE
+
 /* Some platforms have weird includes. */
 #undef IEEE802154_CONF_PANID
 
