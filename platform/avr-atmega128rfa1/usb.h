@@ -1,3 +1,12 @@
+/*
+ * @author    dresden elektronik ingenieurtechnik gmbh: http://www.dresden-elektronik.de
+ * @author    Support email: wireless@dresden-elektronik.de
+ *
+ * Copyright (c) 2011, dresden elektronik ingenieurtechnik gmbh. All rights reserved.
+ *
+ * Licensed under dresden elektronik's Limited License Agreement --> deEULA.txt
+ */
+
 /* Prevent double inclusion */
 #ifndef USB_H_
 #define USB_H_
