@@ -71,6 +71,8 @@
 #include "dev/i2c/bmp085-sensor.h"
 #endif
 
+ #include "dev/adc.h"
+
 
 /* For CoAP-specific example: not required for normal RESTful Web service. */
 #if WITH_COAP == 3
@@ -401,8 +403,73 @@ bmp085_periodic_handler(resource_t *r)
 }
 #endif /* PLATFORM_HAS_BMP085 */
 
+#if defined(__AVR_ATmega128RFA1__)
+/* A simple getter example. Returns the reading from internal temperatur sensor of mega128rfa1 with a simple etag */
+PERIODIC_RESOURCE(interntemp, METHOD_GET, "sensors/intern_temp", "title=\"internal temperatur in [°C] of mega128rfa1\";rt=\"Temperature-C\";if=\"core.s\";obs", 60*CLOCK_SECOND);
+void
+interntemp_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  char tempstr[20] = "ERROR";
+  
+  // Temperatur auf 2 Nachkommastellen genau (festkomma arithmetik)
+  int t = readInternalTemp();
+  snprintf(tempstr, 20, "%3d.%02d [°C]", t/100, t%100);
+  if (strcmp(tempstr, "ERROR") == 0)
+    REST.set_response_status(response, REST.status.INTERNAL_SERVER_ERROR);
 
+  const uint16_t *accept = NULL;
+  int num = REST.get_header_accept(request, &accept);
 
+  if ((num==0) || (num && accept[0]==REST.type.TEXT_PLAIN))
+  {
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "%s", tempstr);
+
+    REST.set_response_payload(response, (uint8_t *)buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_XML))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_XML);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "<temperature value=\"%s\"/>", tempstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_JSON))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_JSON);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "{'temperature':'%s'}", tempstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else
+  {
+    REST.set_response_status(response, REST.status.NOT_ACCEPTABLE);
+    const char *msg = "Supporting content-types text/plain, application/xml, and application/json";
+    REST.set_response_payload(response, msg, strlen(msg));
+  }
+}
+
+void
+interntemp_periodic_handler(resource_t *r)
+{
+  static uint16_t obs_counter = 0;
+  char tempstr[20] = "ERROR";
+  // Temperatur auf 2 Nachkommastellen genau
+  int t = readInternalTemp();
+  snprintf(tempstr, 20, "%3d.%02d [°C]", t/100, t%100);
+  printf("%s\n", tempstr);
+
+  /* Build notification. */
+  coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
+  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_set_payload(notification, tempstr, strlen(tempstr));
+  if (strcmp(tempstr, "ERROR") == 0)
+    coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
+
+  /* Notify the registered observers with the given message type, observe option, and payload. */
+  REST.notify_subscribers(r, obs_counter, notification);
+}
+#endif /* #if defined(__AVR_ATmega128RFA1__) */
 
 PROCESS(rest_server_example, "CoAP Sensornode");
 AUTOSTART_PROCESSES(&rest_server_example);
@@ -464,7 +531,9 @@ PROCESS_THREAD(rest_server_example, ev, data)
     PRINTF("BMP085 not connected\n");
   }
 #endif
-
+#if defined(__AVR_ATmega128RFA1__)
+	rest_activate_periodic_resource(&periodic_resource_interntemp);
+#endif
   /* Define application-specific events here. */
   while(1) {
     PROCESS_WAIT_EVENT();

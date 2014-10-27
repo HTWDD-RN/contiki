@@ -70,4 +70,9 @@ CFLAGS += -DBMA180_SDO=BMA180_CONNECTED_VDDIO
 # sources (core/dev/i2c)
 CONTIKI_SOURCEFILES += bma180-sensor.c
 
+#=======================================================================
+# internal Temperature and Voltage (ADC)
+#=======================================================================
+CONTIKI_SOURCEFILES += adc.c
+
 ########################################################################
