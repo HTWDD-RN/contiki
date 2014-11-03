@@ -93,7 +93,10 @@
 #include "sys/rtimer.h"
 #include "rtimer-arch.h"
 
+#ifdef DE_RF_NODE
+#include "io_access.h"
 #include "usb.h"
+#endif /* DE_RF_NODE */
 
 extern rtimer_clock_t cycle_start;
 extern unsigned char contikimac_ready;
@@ -183,9 +186,12 @@ void initialize(void)
   watchdog_init();
   watchdog_start();
 
-#ifdef DE_RF_NODE
+#ifdef DE_RF_NODE /* initialize usb, buttons, leds */
+  io_init();
+#ifdef DEBUG_USB
   usb_io_init();
-#else
+#endif /* DEBUG_USB */
+#else /* initialize UART */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
@@ -269,6 +275,9 @@ uint8_t i;
   leds_invert(LEDS_RED);
   leds_invert(LEDS_GREEN);
   leds_on(LEDS_YELLOW);
+#ifdef DE_RF_NODE && DEBUG_LED
+  led_set(LED_0, LED_ON);
+#endif /* DE_RF_NODE && DEBUG_LED */
 
   /* Start radio and radio receive process */
   NETSTACK_RADIO.init();

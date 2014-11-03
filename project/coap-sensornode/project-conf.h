@@ -35,6 +35,12 @@
 /* deRFnode board */
 #define DE_RF_NODE
 
+/* debug-messages over USB */
+#define DEBUG_USB
+
+/* use LEDs for debugging */
+#define DEBUG_LED
+
 /* Some platforms have weird includes. */
 #undef IEEE802154_CONF_PANID
 

@@ -37,11 +37,17 @@
  *      Thomas Kuehnel <kuehnelth@gmail.com>
  */
 
+#include <avr/wdt.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "contiki.h"
 #include "contiki-net.h"
+
+#ifdef DE_RF_NODE
+#include "io_access.h"
+#endif /* DE_RF_NODE */
 
 /* Define which resources to include to meet memory constraints. */
 #define REST_RES_EVENT 0
@@ -387,7 +393,7 @@ bmp085_periodic_handler(resource_t *r)
   int32_t p, t;
   if (bmp085_sensor_getPressure(&p, &t) == true)
     snprintf(tempstr, 20, "%4ld.%02ld hPa", p/100, p%100);
-  printf("%s\n", tempstr);
+  PRINTF("%s\n", tempstr);
 
   /* Build notification. */
   coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
@@ -406,6 +412,8 @@ bmp085_periodic_handler(resource_t *r)
 
 PROCESS(rest_server_example, "CoAP Sensornode");
 AUTOSTART_PROCESSES(&rest_server_example);
+
+static struct etimer timer;
 
 PROCESS_THREAD(rest_server_example, ev, data)
 {
@@ -466,7 +474,22 @@ PROCESS_THREAD(rest_server_example, ev, data)
 #endif
   /* Define application-specific events here. */
   while(1) {
-    PROCESS_WAIT_EVENT();
+    etimer_set(&timer, CLOCK_SECOND);
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+    if (button_pressed(BUTTON_0) == BUTTON_PRESSED) {
+#ifdef DEBUG_LED
+        led_set(LED_1, LED_ON);
+#endif /* DEBUG_LED */
+        PRINTF("REBOOTING!\n");
+        wdt_enable(WDTO_15MS);
+        for(;;){}
+    }
+    if (button_pressed(BUTTON_1) == BUTTON_PRESSED) {
+#ifdef DEBUG_LED
+        led_set(LED_2, LED_TOGGLE);
+#endif /* DEBUG_LED */
+        PRINTF("BUTTON_1\n");
+    }
 #if defined (PLATFORM_HAS_BUTTON)
     if (ev == sensors_event && data == &button_sensor) {
       PRINTF("BUTTON\n");
