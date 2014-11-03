@@ -477,7 +477,8 @@ interntemp_periodic_handler(resource_t *r)
 }
 #endif /* #if defined(__AVR_ATmega128RFA1__) */
 
-/* A simple getter example. Returns the reading from internal temperatur sensor of mega128rfa1 with a simple etag */
+#ifdef DE_RF_NODE
+/* A simple getter example. Returns the reading from battery voltage of de_ref_node with a simple etag */
 PERIODIC_RESOURCE(battery, METHOD_GET, "sensors/battery", "title=\"voltage in [V] of batteries\";rt=\"Voltage-V\";if=\"core.s\";obs", 60*CLOCK_SECOND);
 void
 battery_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
@@ -552,6 +553,7 @@ battery_periodic_handler(resource_t *r)
   /* Notify the registered observers with the given message type, observe option, and payload. */
   REST.notify_subscribers(r, obs_counter, notification);
 }
+#endif
 
 PROCESS(rest_server_example, "CoAP Sensornode");
 AUTOSTART_PROCESSES(&rest_server_example);
@@ -619,7 +621,9 @@ PROCESS_THREAD(rest_server_example, ev, data)
 #if defined(__AVR_ATmega128RFA1__)
 	rest_activate_periodic_resource(&periodic_resource_interntemp);
 #endif
-  rest_activate_periodic_resource(&periodic_resource_battery);
+#ifdef DE_RF_NODE
+	rest_activate_periodic_resource(&periodic_resource_battery);
+#endif
 
   /* Define application-specific events here. */
   while(1) {
