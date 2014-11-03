@@ -92,6 +92,12 @@
 #define CYCLE_TIME (RTIMER_ARCH_SECOND / NETSTACK_RDC_CHANNEL_CHECK_RATE)
 #include "sys/rtimer.h"
 #include "rtimer-arch.h"
+
+#ifdef DE_RF_NODE
+#include "io_access.h"
+#include "usb.h"
+#endif /* DE_RF_NODE */
+
 extern rtimer_clock_t cycle_start;
 extern unsigned char contikimac_ready;
 
@@ -180,6 +186,12 @@ void initialize(void)
   watchdog_init();
   watchdog_start();
 
+#ifdef DE_RF_NODE /* initialize usb, buttons, leds */
+  io_init();
+#ifdef DEBUG_USB
+  usb_io_init();
+#endif /* DEBUG_USB */
+#else /* initialize UART */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
@@ -195,12 +207,15 @@ void initialize(void)
 
   /* Second rs232 port for debugging or slip alternative */
   rs232_init(RS232_PORT_1, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
+
   /* Redirect stdout */
 #if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
   rs232_redirect_stdout(RS232_PORT_1);
 #else
   rs232_redirect_stdout(RS232_PORT_0);
 #endif
+#endif /* DE_RF_NODE */
+
   clock_init();
 
   if(MCUSR & (1<<PORF )) PRINTD("Power-on reset.\n");
@@ -260,6 +275,9 @@ uint8_t i;
   leds_invert(LEDS_RED);
   leds_invert(LEDS_GREEN);
   leds_on(LEDS_YELLOW);
+#ifdef DE_RF_NODE && DEBUG_LED
+  led_set(LED_0, LED_ON);
+#endif /* DE_RF_NODE && DEBUG_LED */
 
   /* Start radio and radio receive process */
   NETSTACK_RADIO.init();

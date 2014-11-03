@@ -32,6 +32,15 @@
 #ifndef __PROJECT_ERBIUM_CONF_H__
 #define __PROJECT_ERBIUM_CONF_H__
 
+/* deRFnode board */
+#define DE_RF_NODE
+
+/* debug-messages over USB */
+#define DEBUG_USB
+
+/* use LEDs for debugging */
+#define DEBUG_LED
+
 /* Some platforms have weird includes. */
 #undef IEEE802154_CONF_PANID
 
@@ -90,6 +99,8 @@
 /* Sensor nodes are not supposed to act as routers */
 #undef UIP_CONF_ROUTER
 #define UIP_CONF_ROUTER 0
+
+
 
 //lower send/receive power for testing 
 /*
