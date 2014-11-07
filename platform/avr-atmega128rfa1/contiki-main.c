@@ -189,7 +189,9 @@ void initialize(void)
 #ifdef DE_RF_NODE /* initialize usb, buttons, leds */
   io_init();
 #ifdef DEBUG_USB
-  usb_io_init();
+  if (readADC(PF1)) {
+     usb_io_init();
+  }
 #endif /* DEBUG_USB */
 #else /* initialize UART */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
