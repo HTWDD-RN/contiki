@@ -111,3 +111,7 @@ button_state_t button_pressed(button_number_t button_nr);
 #endif /* IO_ACCESS_H_ */
 
 /* EOF */
+
+/* the following code does not belong to dresden elektronik */
+
+int leds_onboard_get(void);

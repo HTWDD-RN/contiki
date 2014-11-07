@@ -478,6 +478,64 @@ interntemp_periodic_handler(resource_t *r)
 #endif /* #if defined(__AVR_ATmega128RFA1__) */
 
 #ifdef DE_RF_NODE
+
+/******************************************************************************/
+#if REST_RES_LEDS
+/*A simple actuator example, depending on the number query parameter and post variable mode, corresponding led is activated or deactivated*/
+RESOURCE(leds_onboard, METHOD_POST | METHOD_PUT , "actuators/leds_onboard", "title=\"LEDs_board: ?number=0|1|2, POST/PUT mode=on|off\";rt=\"Control\"");
+
+void
+leds_onboard_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  size_t len = 0;
+  const char *number = NULL;
+  const char *mode = NULL;
+  uint8_t led = 0;
+  int success = 1;
+  int changed = 0;
+
+  PRINTF("leds_onboard_handler\n");
+  if ((len=REST.get_query_variable(request, "number", &number))) {
+    PRINTF("number %.*s\n", len, number);
+
+    if (strncmp(number,"0", len)==0) {
+      led = LED_0;
+    } else if(strncmp(number,"1", len)==0) {
+      led = LED_1;
+    } else if (strncmp(number,"2", len)==0) {
+      led = LED_2;
+    } else {
+      success = 0;
+    }
+  } else {
+    success = 0;
+  }
+
+  if (success && (len=REST.get_post_variable(request, "mode", &mode))) {
+    PRINTF("mode %s\n", mode);
+
+    if (strncmp(mode, "on", len)==0) {
+      changed = (leds_onboard_get() & _BV(led)) != 0;
+      led_set(led, LED_ON);
+    } else if (strncmp(mode, "off", len)==0) {
+      changed = (leds_onboard_get() & _BV(led)) == 0;
+      led_set(led, LED_OFF);
+    } else {
+      success = 0;
+    }
+  } else {
+    success = 0;
+  }
+
+  if (!success) {
+    REST.set_response_status(response, REST.status.BAD_REQUEST);
+  } else {
+    if (changed)
+      REST.set_response_status(response, REST.status.CHANGED);
+  }
+}
+#endif /* REST_RES_LEDS */
+
 /* A simple getter example. Returns the reading from battery voltage of de_ref_node with a simple etag */
 PERIODIC_RESOURCE(battery, METHOD_GET, "sensors/battery", "title=\"voltage in [V] of batteries\";rt=\"Voltage-V\";if=\"core.s\";obs", 60*CLOCK_SECOND);
 void
@@ -617,6 +675,12 @@ PROCESS_THREAD(rest_server_example, ev, data)
     PRINTF("BMP085 not connected\n");
   }
 #endif
+#ifdef DE_RF_NODE
+#if REST_RES_LEDS
+  rest_activate_resource(&resource_leds_onboard);
+#endif /* REST_RES_LEDS */
+#endif /* DE_RF_NODE */
+
 
 #if defined(__AVR_ATmega128RFA1__)
 	rest_activate_periodic_resource(&periodic_resource_interntemp);
