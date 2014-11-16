@@ -277,7 +277,7 @@ uint8_t i;
   leds_invert(LEDS_RED);
   leds_invert(LEDS_GREEN);
   leds_on(LEDS_YELLOW);
-#ifdef DE_RF_NODE && DEBUG_LED
+#if defined(DE_RF_NODE) && defined(DEBUG_LED)
   led_set(LED_0, LED_ON);
 #endif /* DE_RF_NODE && DEBUG_LED */
 
