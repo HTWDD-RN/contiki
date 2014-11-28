@@ -54,6 +54,40 @@
 #warning "COAP_MAX_OPEN_TRANSACTIONS smaller than COAP_MAX_OBSERVERS: cannot handle CON notifications"
 #endif
 
+#ifdef CONDITION
+/* Conditional observe */
+typedef enum {
+  CONDITION_CANCELLATION = 0,
+  CONDITION_TIME_SERIES = 1,
+  CONDITION_MIN_RESP_TIME = 2,
+  CONDITION_MAX_RESP_TIME = 3,
+  CONDITION_STEP = 4,
+  CONDITION_ALLVALUES_LESS = 5,
+  CONDITION_ALLVALUES_GREATER = 6,
+  CONDITION_VALUE_EQUAL = 7,
+  CONDITION_VALUE_NOT_EQUAL = 8,
+  CONDITION_PERIODIC = 9
+} condition_type_t;
+
+typedef enum {
+  INTEGER = 0,
+  DURATION_S = 1,
+  FLOAT = 2
+} value_type_t;
+
+typedef enum {
+  CON = 0,
+  NON = 1
+} cond_reliability;
+
+typedef struct {
+  uint8_t cond_type;
+  uint8_t reliability_flag;
+  uint8_t value_type;
+  uint8_t value;
+} coap_condition_t;
+#endif
+
 typedef struct coap_observer {
   struct coap_observer *next; /* for LIST */
 
@@ -64,11 +98,19 @@ typedef struct coap_observer {
   uint8_t token[COAP_TOKEN_LEN];
   uint16_t last_mid;
   struct stimer refresh_timer;
+
+#ifdef CONDITION		/* Conditional observe */
+  coap_condition_t condition; 
+  uint32_t      last_notification_time; 	/* Used with time-based conditions and compare max-age  */
+	uint32_t			last_notified_value;    	/* Used with all conds to check if last notified value is different
+																						 from the current value*/
+	uint8_t 			cond_observe_flag; 				/*0 = Normal Observe, 1 = Conditional Observe*/
+	/*-----------------*/
+#endif
+
 } coap_observer_t;
 
 list_t coap_get_observers(void);
-
-coap_observer_t *coap_add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token, size_t token_len, const char *url);
 
 void coap_remove_observer(coap_observer_t *o);
 int coap_remove_observer_by_client(uip_ipaddr_t *addr, uint16_t port);
@@ -76,8 +118,26 @@ int coap_remove_observer_by_token(uip_ipaddr_t *addr, uint16_t port, uint8_t *to
 int coap_remove_observer_by_url(uip_ipaddr_t *addr, uint16_t port, const char *url);
 int coap_remove_observer_by_mid(uip_ipaddr_t *addr, uint16_t port, uint16_t mid);
 
-void coap_notify_observers(resource_t *resource, int32_t obs_counter, void *notification);
-
 void coap_observe_handler(resource_t *resource, void *request, void *response);
+
+#ifdef CONDITION				/* Conditional observe */
+coap_observer_t *coap_add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token, size_t token_len, const char *url, coap_condition_t *condition); 
+void coap_notify_observers(resource_t *resource, uint16_t obs_counter, void *notification, uint32_t cond_value); 
+
+int coap_decode_condition (coap_condition_t *cond, uint8_t *encoded_cond, uint8_t condition_len);
+int coap_encode_condition (coap_condition_t *cond, uint8_t *encoded_cond, uint8_t *condition_len);
+
+int satisfies_condition(coap_observer_t *obs, uint32_t cond_value);
+
+int coap_set_header_condition(void *packet, uint8_t *condition, uint8_t condition_len);
+int coap_get_header_condition(void *packet, uint8_t **condition);
+
+#else	/* Conditional observe not supported*/
+coap_observer_t *coap_add_observer(uip_ipaddr_t *addr, uint16_t port, const uint8_t *token, size_t token_len, const char *url); 
+void coap_notify_observers(resource_t *resource, uint16_t obs_counter, void *notification);
+#endif /* CONDITION */
+
+int coap_reset_observations();
+int coap_list_observations(char *res_url, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 
 #endif /* COAP_OBSERVING_H_ */

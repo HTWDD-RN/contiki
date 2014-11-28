@@ -1,0 +1,82 @@
+Introduction
+============
+Erbium is the official Contiki REST framework which supports CoAP (V3, V7, V12, V13), blockwise transfers and the observation of resources. Resource observation is simple protocol extension for CoAP that enables CoAP clients to "observe" resources, i.e., to retrieve a representation of a resource and keep this representation updated by the server over a period of time [ID: draft-ietf-core-observe-08].
+
+Conditional Observation is an extension to Resource Observation and is described in [ID: draft-li-conditional-observe-04]. According to this Internet draft, clients may specify notification criteria when they make an observation request. As a result, the server only sends state changes that are of interest to the client, avoiding unnecessary packet transmissions. Details of conditional observation, its implementation, experimental results, and mathematical analysis are discussed in the journal paper "Facilitating the creation of IoT applications through conditional observations in CoAP" (http://jwcn.eurasipjournals.com/content/2013/1/177).
+
+This README file explains how to use our implementation of Conditional Observation. If you use this implementation as part of your research, please do not forget to cite our paper. 
+   
+
+Changes
+=======
+To support Conditional Observation, the original CoAP Version 13 code has been modified as follows:
+
+- The option Condition (Option No. 18), has been added to er-coap-13.h. 
+- The option is defined as array of uint8_t (in er-coap-13.h)
+- Serialization and Parsing codes of Condition option are added to er-coap-13.c
+- A structure holding the condition option is defined in er-coap-13-observing.h.
+- The structure that stores list of observers is modified to include conditions and other related info 
+  (in er-coap-13-observing.h).
+- Additional functions are added to handle conditional observe issues (encoding and decoding the condition info,
+  setter and getter function, checking if condition is satisfied, list/reset all observation relationships)
+- CoAP add obsrver, observe handler and notify observer functions are modified to support conditions
+- The REST.notify_subscribers function (defined in app/erbium/erbium.h) is modified to accept new value as a 
+  parameter.
+
+---------------------------------------------------------------------------------------------------------------
+Note: You may comment the #define CONDITION statement in project-conf.h and recompile to revert to the original
+      normal observation
+---------------------------------------------------------------------------------------------------------------
+
+Example Files
+=============
+er-example-condition-server.c - Same as er-example-server.c, but focuses on conditional observe functionality by defining a periodic resource /sensors/temp. /observerdir resourse is also added to list or reset observation relationships.
+er-example-condition-client.c - This file sends a conditional observation request to the server for the resource /sensors/temp. Therefore, the client requests to be notified if the temperature values are greater than 22. Since it is a NON request, the server will not expect an ACK.
+
+
+Running Conditional Observe Example in Cooja
+===========================================
+
+* Preliminaries
+---------------
+-  Make sure rpl-border-router has the same stack and fits into mote memory:
+   You can disable RDC in border-router project-conf.h (not really required as BR keeps radio turned on).
+   #undef NETSTACK_CONF_RDC
+   #define NETSTACK_CONF_RDC     nullrdc_driver
+
+-  For convenience, define the Cooja addresses in /etc/hosts
+
+	Z1 Motes
+	--------
+	aaaa::c30c:0:0:0001			cooja1		/*Border Router*/
+	aaaa::c30c:0:0:0002			cooja2		/*CoAP Server*/
+	aaaa::c30c:0:0:0003			cooja3		/*CoAP Client*/
+
+
+	TMOTES
+	------
+   	aaaa::0212:7401:0001:0101	cooja1
+   	aaaa::0212:7402:0002:0202	cooja2
+   	...
+
+   $ make TARGET=z1 savetarget
+
+* Running the simulation (using Z1 as cooja nodes)
+--------------------------------------------------
+1) Open a terminal
+2) $cd example/er-rest-example
+3) make TARGET=cooja cond-server-client-test.csc
+4) Open another terminal and change directory to example/er-rest-example
+5) $ make connect-router-cooja
+6) Click Start on Cooja
+
+Note: To see the output on the client, open $(CONTIKI_DIR)/apps/er-coap-13/er-coap-engine.c file using a text  
+      editor.Change the PRINTF on line 110 (PRINTF payload) to small letters (printf). Save. Stop the running simulation. 
+      Reload Cooja. Run step 5 and 6 above  
+
+Observation Directory
+======================
+The observation directory resource, /observerdir, can be used to list and reset all observation resources. We can use the Copper (Cu) CoAP user-agent to do so. (You can get it from https://addons.mozilla.org/en-US/firefox/addon/copper-270430/. Listing and resetting relationships using /observerdir resource also works for normal observations.
+
+* Type coap://cooja2:5683/observedir?action=list and click GET - you will see list of ip addresses and obs conds.
+* Type coap://cooja2:5683/observedir?action=clear and click GET - all observation relationships will be terminated

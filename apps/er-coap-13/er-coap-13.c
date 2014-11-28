@@ -356,6 +356,9 @@ coap_serialize_message(void *packet, uint8_t *buffer)
   COAP_SERIALIZE_INT_OPTION(    COAP_OPTION_MAX_AGE,        max_age, "Max-Age")
   COAP_SERIALIZE_STRING_OPTION( COAP_OPTION_URI_QUERY,      uri_query, '&', "Uri-Query")
   COAP_SERIALIZE_ACCEPT_OPTION( COAP_OPTION_ACCEPT,         accept, "Accept")
+#ifdef CONDITION
+  COAP_SERIALIZE_BYTE_OPTION(   COAP_OPTION_CONDITION,      condition, "Condition"); // Conditional observe
+#endif
   COAP_SERIALIZE_STRING_OPTION( COAP_OPTION_LOCATION_QUERY, location_query, '&', "Location-Query")
   COAP_SERIALIZE_BLOCK_OPTION(  COAP_OPTION_BLOCK2,         block2, "Block2")
   COAP_SERIALIZE_BLOCK_OPTION(  COAP_OPTION_BLOCK1,         block1, "Block1")
@@ -609,6 +612,19 @@ coap_parse_message(void *packet, uint8_t *data, uint16_t data_len)
         coap_pkt->observe = coap_parse_int_option(current_option, option_length);
         PRINTF("Observe [%lu]\n", coap_pkt->observe);
         break;
+#ifdef CONDITION
+      case COAP_OPTION_CONDITION: // Conditional observe
+		coap_pkt->condition_len = MIN(COAP_MAX_CONDITION_LEN, option_length);
+        memcpy(coap_pkt->condition, current_option, coap_pkt->condition_len);
+        PRINTF("Condition %u [0x%02X%02X%02X%02X%02X]\n", coap_pkt->condition_len,
+          coap_pkt->etag[0],
+          coap_pkt->etag[1],
+          coap_pkt->etag[2],
+          coap_pkt->etag[3],
+          coap_pkt->etag[4]
+        ); /*FIXME always prints 5 bytes */
+        break;
+#endif
       case COAP_OPTION_BLOCK2:
         coap_pkt->block2_num = coap_parse_int_option(current_option, option_length);
         coap_pkt->block2_more = (coap_pkt->block2_num & 0x08)>>3;

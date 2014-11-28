@@ -50,11 +50,15 @@
 #define COAP_MAX_HEADER_SIZE    70
 */
 
+#define CONDITION			/* Conditional Observation */
+
 /* The IP buffer size must fit all other hops, in particular the border router. */
 /*
 #undef UIP_CONF_BUFFER_SIZE
 #define UIP_CONF_BUFFER_SIZE    1280
 */
+#undef UIP_CONF_BUFFER_SIZE
+#define UIP_CONF_BUFFER_SIZE    240
 
 /* Multiplies with chunk size, be aware of memory constraints. */
 #undef COAP_MAX_OPEN_TRANSACTIONS
