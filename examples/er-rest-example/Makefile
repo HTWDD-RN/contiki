@@ -1,4 +1,9 @@
-all: er-example-server er-example-client
+all: er-example-condition-server er-example-condition-client
+
+	$(MAKE) $(MAKEFLAGS) ROLE=server er-example-condition-server
+	$(MAKE) $(MAKEFLAGS) clean
+	$(MAKE) $(MAKEFLAGS) ROLE=client er-example-condition-client
+
 # use this target explicitly if requried: er-plugtest-server
 
 
@@ -17,14 +22,21 @@ CFLAGS += -DUIP_CONF_IPV6=1
 CONTIKI=../..
 CFLAGS += -DPROJECT_CONF_H=\"project-conf.h\"
 
+CFLAGS += -DCONDITION
+
 # variable for Makefile.include
 ifneq ($(TARGET), minimal-net)
 CFLAGS += -DUIP_CONF_IPV6_RPL=1
 else
 # minimal-net does not support RPL under Linux and is mostly used to test CoAP only
 ${info INFO: compiling without RPL}
+CFLAGS += -DUIP_CONF_ROUTER=0
 CFLAGS += -DUIP_CONF_IPV6_RPL=0
-CFLAGS += -DHARD_CODED_ADDRESS=\"fdfd::10\"
+ifneq ($(ROLE),client)
+CFLAGS += -DHARD_CODED_ADDRESS=\"::02:232\" -DROLE=1
+else
+CFLAGS += -DHARD_CODED_ADDRESS=\"::02:230\" -DROLE=2
+endif
 ${info INFO: compiling with large buffers}
 CFLAGS += -DUIP_CONF_BUFFER_SIZE=2048
 CFLAGS += -DREST_MAX_CHUNK_SIZE=1024

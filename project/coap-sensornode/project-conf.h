@@ -108,4 +108,7 @@
 #define RF230_MIN_RX_POWER 30
 */
 
+/* Conditional Observation */
+#define CONDITION
+
 #endif /* __PROJECT_ERBIUM_CONF_H__ */

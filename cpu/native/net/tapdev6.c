@@ -57,7 +57,11 @@
 #include <linux/if_tun.h>
 #define DEVTAP "/dev/net/tun"
 #else  /* linux */
+#if ROLE == 2
+#define DEVTAP "/dev/tap1"
+#else
 #define DEVTAP "/dev/tap0"
+#endif
 #endif /* linux */
 
 #ifdef __APPLE__
@@ -330,7 +334,11 @@ tapdev_init(void)
      PRINTF("%s\n", buf);
   */
   /* freebsd */
+#if ROLE == 2
+  snprintf(buf, sizeof(buf), "ifconfig tap1 up");
+#else
   snprintf(buf, sizeof(buf), "ifconfig tap0 up");
+#endif
   system(buf);
   printf("%s\n", buf);
   

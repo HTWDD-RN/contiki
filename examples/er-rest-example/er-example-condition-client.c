@@ -79,7 +79,7 @@
 /* TODO: This server address is hard-coded for Cooja. */
 //#define SERVER_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xaaaa, 0, 0, 0, 0x0212, 0x7402, 0x0002, 0x0202) /* cooja2 */
 
-#define SERVER_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xaaaa, 0, 0, 0, 0xc30c, 0, 0, 0x0002) /*Z1 Mote*/
+#define SERVER_NODE(ipaddr)   uip_ip6addr(ipaddr, 0xfe80, 0, 0, 0, 0, 0x00ff, 0xfe02, 0x0232) /*Z1 Mote*/
 
 #define LOCAL_PORT      UIP_HTONS(COAP_DEFAULT_PORT+1)
 #define REMOTE_PORT     UIP_HTONS(COAP_DEFAULT_PORT)
@@ -122,7 +122,7 @@ PROCESS_THREAD(coap_client_example, ev, data)
   coap_receiver_init();
 
   static struct etimer et;
-  etimer_set(&et, 1*CLOCK_SECOND);
+  etimer_set(&et, 20*CLOCK_SECOND);
 
 #ifdef CONDITION	/* Conditional observe */
 	coap_condition_t cond;

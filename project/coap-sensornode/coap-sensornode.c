@@ -138,11 +138,15 @@ event_event_handler(resource_t *r)
 
   /* Build notification. */
   coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
-  coap_init_message(notification, COAP_TYPE_CON, REST.status.OK, 0 );
+  coap_init_message(notification, COAP_TYPE_CON, CONTENT_2_05, 0 );
   coap_set_payload(notification, content, snprintf(content, sizeof(content), "EVENT %u", event_counter));
 
   /* Notify the registered observers with the given message type, observe option, and payload. */
+#ifdef CONDITION
+  REST.notify_subscribers(r, event_counter, notification, event_counter);
+#else /* Conditional observe not supported */
   REST.notify_subscribers(r, event_counter, notification);
+#endif /* CONDITION */
 }
 #endif /* PLATFORM_HAS_BUTTON */
 
@@ -265,18 +269,23 @@ void
 sht21_temperature_periodic_handler(resource_t *r)
 {
   static uint16_t obs_counter = 0;
-  char tempstr[20] = "ERROR";
+  char tempstr[20] = "ERROR", cptempstr[20];
+
   if (sht21_sensor.value(SHT21_SENSOR_TEMP) == 1)
     sht21_sensor_getLastTemperature(tempstr, sizeof(tempstr));
   /* Build notification. */
   coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
-  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, obs_counter );
   coap_set_payload(notification, tempstr, strlen(tempstr));
   if (strcmp(tempstr, "ERROR") == 0)
     coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
 
   /* Notify the registered observers with the given message type, observe option, and payload. */
+#ifdef CONDITION
+  REST.notify_subscribers(r, obs_counter, notification, atoi(tempstr));
+#else
   REST.notify_subscribers(r, obs_counter, notification);
+#endif /* CONDITION */
 }
 
 PERIODIC_RESOURCE(sht21_humidity, METHOD_GET, "sensors/sht21_humidity", "title=\"Relative Humidity in [%RH] (supports JSON)\";rt=\"Humidity-rel\";if=\"core.s\";obs", 60*CLOCK_SECOND);
@@ -325,18 +334,23 @@ void
 sht21_humidity_periodic_handler(resource_t *r)
 {
   static uint16_t obs_counter = 0;
-  char humstr[20] = "ERROR";
+  char humstr[20] = "ERROR", cphumstr[20];
+
   if (sht21_sensor.value(SHT21_SENSOR_RELATIVE_HUMIDITY) == 1)
     sht21_sensor_getLastelativeHumidity(humstr, sizeof(humstr));
   /* Build notification. */
   coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
-  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, obs_counter );
   coap_set_payload(notification, humstr, strlen(humstr));
   if (strcmp(humstr, "ERROR") == 0)
     coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
 
   /* Notify the registered observers with the given message type, observe option, and payload. */
+#ifdef CONDITION
+  REST.notify_subscribers(r, obs_counter, notification, atoi(cphumstr));
+#else
   REST.notify_subscribers(r, obs_counter, notification);
+#endif /* CONDITION */
 }
 
 #endif /* PLATFORM_HAS_SHT21 */
@@ -399,13 +413,17 @@ bmp085_periodic_handler(resource_t *r)
 
   /* Build notification. */
   coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
-  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, obs_counter );
   coap_set_payload(notification, tempstr, strlen(tempstr));
   if (strcmp(tempstr, "ERROR") == 0)
     coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
 
   /* Notify the registered observers with the given message type, observe option, and payload. */
+#ifdef CONDITION
+  REST.notify_subscribers(r, obs_counter, notification, p/100);
+#else
   REST.notify_subscribers(r, obs_counter, notification);
+#endif /* CONDITION */
 }
 #endif /* PLATFORM_HAS_BMP085 */
 
@@ -467,13 +485,17 @@ interntemp_periodic_handler(resource_t *r)
 
   /* Build notification. */
   coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
-  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, obs_counter );
   coap_set_payload(notification, tempstr, strlen(tempstr));
   if (strcmp(tempstr, "ERROR") == 0)
     coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
 
   /* Notify the registered observers with the given message type, observe option, and payload. */
+#ifdef CONDITION
+  REST.notify_subscribers(r, obs_counter, notification, t/100);
+#else
   REST.notify_subscribers(r, obs_counter, notification);
+#endif /* CONDITION */
 }
 #endif /* #if defined(__AVR_ATmega128RFA1__) */
 
@@ -603,13 +625,17 @@ battery_periodic_handler(resource_t *r)
 
   /* Build notification. */
   coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
-  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_init_message(notification, COAP_TYPE_NON, CONTENT_2_05, obs_counter );
   coap_set_payload(notification, tempstr, strlen(tempstr));
   if (strcmp(tempstr, "ERROR") == 0)
     coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
 
   /* Notify the registered observers with the given message type, observe option, and payload. */
+#ifdef CONDITION
+  REST.notify_subscribers(r, obs_counter, notification, voltage/100);
+#else
   REST.notify_subscribers(r, obs_counter, notification);
+#endif /* CONDITION */
 }
 #endif
 

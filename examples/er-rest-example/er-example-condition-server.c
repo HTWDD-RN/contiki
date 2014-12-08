@@ -44,9 +44,6 @@
 
 #include "dev/leds.h"
 #include "dev/sht11.h"
-#include "dev/i2cmaster.h" 
-#include "dev/light-ziglet.h"
-#include "dev/z1-phidgets.h"
 #include "lib/sensors.h"
 
 #include "dev/cc2420.h"
