@@ -55,6 +55,7 @@
 #define REST_RES_TOGGLE 1
 #define REST_RES_SHT21 1
 #define REST_RES_BMP085 1
+#define REST_RES_BUTTON 1
 
 #if !UIP_CONF_IPV6_RPL && !defined (CONTIKI_TARGET_MINIMAL_NET) && !defined (CONTIKI_TARGET_NATIVE)
 #warning "Compiling with static routing!"
@@ -145,6 +146,111 @@ event_event_handler(resource_t *r)
   REST.notify_subscribers(r, event_counter, notification);
 }
 #endif /* PLATFORM_HAS_BUTTON */
+
+/******************************************************************************/
+#if REST_RES_BUTTON && defined (PLATFORM_HAS_BUTTON)
+PERIODIC_RESOURCE(button1, METHOD_GET, "sensors/button1", "title=\"button1 (supports JSON)\";rt=\"button-state\";if=\"core.s\";obs", 5*CLOCK_SECOND);
+void
+button1_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  char statestr[20] = "ERROR";
+  switch (button_pressed(BUTTON_1)) {
+  case BUTTON_RELEASED:
+      sprintf(statestr, "released");
+      break;
+  case BUTTON_PRESSED:
+      sprintf(statestr, "pressed");
+      break;
+  default:
+      PRINTF("ERROR: undefined button state\n");
+      break;
+  }
+
+  const uint16_t *accept = NULL;
+  int num = REST.get_header_accept(request, &accept);
+
+  if ((num==0) || (num && accept[0]==REST.type.TEXT_PLAIN))
+  {
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "%s", statestr);
+
+    REST.set_response_payload(response, (uint8_t *)buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_XML))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_XML);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "<button1 state=\"%s\"/>", statestr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_JSON))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_JSON);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "{'button1':'%s'}", statestr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else
+  {
+    REST.set_response_status(response, REST.status.NOT_ACCEPTABLE);
+    const char *msg = "Supporting content-types text/plain, application/xml, and application/json";
+    REST.set_response_payload(response, msg, strlen(msg));
+  }
+}
+
+void
+button1_periodic_handler(resource_t *r)
+{
+  static uint16_t obs_counter = 0;
+  char statestr[20] = "ERROR";
+
+  static struct stimer st;
+  static button_state_t last_button_state=-1; /* start from undefined state */
+  static int first_time=1;
+  button_state_t current_button_state;
+  int send = 0;
+
+  if (first_time) {
+    first_time=0;
+    stimer_set(&st, 60);
+  } else if (stimer_expired(&st)) {
+    send = 1;
+  }
+
+  current_button_state = button_pressed(BUTTON_1);
+
+  if (last_button_state != current_button_state) {
+    send = 1;
+    last_button_state = current_button_state;
+  }
+
+  if (send) {
+    stimer_reset(&st);
+
+    switch (current_button_state) {
+    case BUTTON_RELEASED:
+        sprintf(statestr, "released");
+        break;
+    case BUTTON_PRESSED:
+        sprintf(statestr, "pressed");
+        break;
+    default:
+        PRINTF("ERROR: undefined button state\n");
+        break;
+    }
+    /* Build notification. */
+    coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
+    coap_init_message(notification, COAP_TYPE_CON, REST.status.OK, 0 );
+    coap_set_payload(notification, statestr, strlen(statestr));
+    if (strcmp(statestr, "ERROR") == 0)
+      coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
+
+    /* Notify the registered observers with the given message type, observe option, and payload. */
+    REST.notify_subscribers(r, obs_counter, notification);
+  }
+}
+
+#endif /* if REST_RES_BUTTON && defined (PLATFORM_HAS_BUTTON) */
 
 /******************************************************************************/
 #if defined (PLATFORM_HAS_LEDS)
@@ -650,6 +756,9 @@ PROCESS_THREAD(rest_server_example, ev, data)
   SENSORS_ACTIVATE(button_sensor);
   rest_activate_event_resource(&resource_event);
 #endif
+#if defined (PLATFORM_HAS_BUTTON) && REST_RES_BUTTON
+  rest_activate_periodic_resource(&periodic_resource_button1);
+#endif
 #if defined (PLATFORM_HAS_LEDS)
 #if REST_RES_LEDS
   rest_activate_resource(&resource_leds);
@@ -703,9 +812,12 @@ PROCESS_THREAD(rest_server_example, ev, data)
     }
     if (button_pressed(BUTTON_1) == BUTTON_PRESSED) {
 #ifdef DEBUG_LED
-        led_set(LED_2, LED_TOGGLE);
+        led_set(LED_2, LED_ON);
 #endif /* DEBUG_LED */
-        PRINTF("BUTTON_1\n");
+    } else {
+#ifdef DEBUG_LED
+        led_set(LED_2, LED_OFF);
+#endif /* DEBUG_LED */
     }
 #if defined (PLATFORM_HAS_BUTTON)
     if (ev == sensors_event && data == &button_sensor) {
