@@ -283,6 +283,8 @@ typedef unsigned short uip_stats_t;
 /* CCA theshold energy -91 to -61 dBm (default -77). Set this smaller than the expected minimum rssi to avoid packet collisions */
 /* The Jackdaw menu 'm' command is helpful for determining the smallest ever received rssi */
 #define RF230_CONF_CCA_THRES    -90
+/* whether we should use a treshhold in cca or if we use carrier sense mode (detect a valid 802.15.4 signal) */
+//#define RF230_CONF_CCA_CARRIER_SENSE_ONLY 1
 
 
 #elif 1  /* cx-mac radio cycling */

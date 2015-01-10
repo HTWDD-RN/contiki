@@ -1640,8 +1640,9 @@ rf230_cca(void)
   ENERGEST_ON(ENERGEST_TYPE_LED_YELLOW);
   /* CCA Mode Mode 1=Energy above threshold  2=Carrier sense only  3=Both 0=Either (RF231 only) */
   /* Use the current mode. Note triggering a manual CCA is not recommended in extended mode */
-//hal_subregister_write(SR_CCA_MODE,1);
-
+  #ifdef RF230_CONF_CCA_CARRIER_SENSE_ONLY
+  hal_subregister_write(SR_CCA_MODE,2);
+  #endif
   /* Start the CCA, wait till done, return result */
   /* Note reading the TRX_STATUS register clears both CCA_STATUS and CCA_DONE bits */
 #if defined(__AVR_ATmega128RFA1__)
@@ -1658,23 +1659,35 @@ rf230_cca(void)
 
     rf230_ccawait=1;
 //CCA_REQUEST is supposed to trigger the interrupt but it doesn't
-//  hal_subregister_write(SR_CCA_REQUEST,1);
-
+  #ifdef RF230_CONF_CCA_CARRIER_SENSE_ONLY
+  // start manual cca
+  hal_subregister_write(SR_CCA_REQUEST,1);
+  #endif
     /* Write to ED_LEVEL register to start CCA */
+#ifndef RF230_CONF_CCA_CARRIER_SENSE_ONLY
     {
+      
       uint8_t volatile saved_sreg = SREG;
       sei( );
       hal_register_write(PHY_ED_LEVEL,0);
       while (rf230_ccawait) {}
-      SREG = saved_sreg;
+      SREG = saved_sreg;     
     }
 
     /* Use ED register to determine result. 77dBm is poweron csma default.*/
-#ifdef RF230_CONF_CCA_THRES
+  #ifdef RF230_CONF_CCA_THRES
     if (hal_register_read(RG_PHY_ED_LEVEL)<(91+RF230_CONF_CCA_THRES)) cca=0xff;
-#else
+  #else
     if (hal_register_read(RG_PHY_ED_LEVEL)<(91-77)) cca=0xff;
+  #endif
 #endif
+
+  #ifdef RF230_CONF_CCA_CARRIER_SENSE_ONLY
+  while(hal_subregister_read(SR_CCA_DONE) == 0) {}
+  // 1 = channel clear, 0 = channel bussy
+  if(hal_subregister_read(SR_CCA_STATUS)) cca=0xff;
+  #endif
+
 //TODO:see if the status register works!
 //   cca=hal_register_read(RG_TRX_STATUS);
 #if RF230_CONF_AUTOACK
@@ -1777,8 +1790,11 @@ void rf230_start_sneeze(void) {
     hal_register_write(0x02, 0x03);
     hal_register_write(0x03, 0x10);
  // hal_register_write(0x08, 0x20+26);    //channel 26
+#ifdef RF230_CONF_CCA_CARRIER_SENSE_ONLY
+    hal_subregister_write(SR_CCA_MODE,2); //carrier sense only
+#else
     hal_subregister_write(SR_CCA_MODE,1); //leave channel unchanged
-
+#endif
  // hal_register_write(0x05, 0x00);       //output power maximum
     hal_subregister_write(SR_TX_AUTO_CRC_ON, 0);  //clear AUTO_CRC, leave output power unchanged
  
