@@ -56,6 +56,7 @@
 #define REST_RES_SHT21 1
 #define REST_RES_BMP085 1
 #define REST_RES_BUTTON 1
+#define REST_RSSI 1
 
 #if !UIP_CONF_IPV6_RPL && !defined (CONTIKI_TARGET_MINIMAL_NET) && !defined (CONTIKI_TARGET_NATIVE)
 #warning "Compiling with static routing!"
@@ -77,6 +78,9 @@
 #if defined (PLATFORM_HAS_BMP085)
 #include "dev/i2c/bmp085-sensor.h"
 #endif
+#if REST_RSSI && defined (__AVR_ATmega128RFA1__)
+#include "radio/rf230bb/rf230bb.h"
+#endif /* if REST_RSSI && defined (__AVR_ATmega128RFA1__) */
 
  #include "dev/adc.h"
 
@@ -719,6 +723,70 @@ battery_periodic_handler(resource_t *r)
 }
 #endif
 
+#if REST_RSSI && defined (__AVR_ATmega128RFA1__)
+PERIODIC_RESOURCE(rssi, METHOD_GET, "sensors/rssi", "title=\"RSSI", 5*CLOCK_SECOND);
+
+void
+rssi_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  char str[20] = "ERROR";
+  snprintf(str, 20, "%i [dBm]", rf230_last_rssi-90); /* value between [-90;-10] dBm */
+  if (strcmp(str, "ERROR") == 0)
+    REST.set_response_status(response, REST.status.INTERNAL_SERVER_ERROR);
+
+  const uint16_t *accept = NULL;
+  int num = REST.get_header_accept(request, &accept);
+
+  if ((num==0) || (num && accept[0]==REST.type.TEXT_PLAIN))
+  {
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "%s", str);
+
+    REST.set_response_payload(response, (uint8_t *)buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_XML))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_XML);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "<RSSI value=\"%s\"/>", str);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_JSON))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_JSON);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "{'RSSI':'%s'}", str);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else
+  {
+    REST.set_response_status(response, REST.status.NOT_ACCEPTABLE);
+    const char *msg = "Supporting content-types text/plain, application/xml, and application/json";
+    REST.set_response_payload(response, msg, strlen(msg));
+  }
+}
+
+void
+rssi_periodic_handler(resource_t *r)
+{
+  static uint16_t obs_counter = 0;
+  char str[20] = "ERROR";
+
+  snprintf(str, 20, "%i [dBm]", rf230_last_rssi-90); /* value between [-90;-10] dBm */
+
+  /* Build notification. */
+  coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
+  coap_init_message(notification, COAP_TYPE_CON, REST.status.OK, 0 );
+  coap_set_payload(notification, str, strlen(str));
+  if (strcmp(str, "ERROR") == 0)
+      coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
+
+  /* Notify the registered observers with the given message type, observe option, and payload. */
+  REST.notify_subscribers(r, obs_counter, notification);
+}
+
+#endif /* if REST_RSSI && defined (__AVR_ATmega128RFA1__) */
+
 PROCESS(rest_server_example, "CoAP Sensornode");
 AUTOSTART_PROCESSES(&rest_server_example);
 
@@ -793,7 +861,11 @@ PROCESS_THREAD(rest_server_example, ev, data)
 
 #if defined(__AVR_ATmega128RFA1__)
 	rest_activate_periodic_resource(&periodic_resource_interntemp);
+#if REST_RSSI
+  rest_activate_periodic_resource(&periodic_resource_rssi);
+#endif /* REST_RSSI */
 #endif
+
 #ifdef DE_RF_NODE
 	rest_activate_periodic_resource(&periodic_resource_battery);
 #endif
