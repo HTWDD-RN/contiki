@@ -724,7 +724,7 @@ battery_periodic_handler(resource_t *r)
 #endif
 
 #if REST_RSSI && defined (__AVR_ATmega128RFA1__)
-PERIODIC_RESOURCE(rssi, METHOD_GET, "sensors/rssi", "title=\"RSSI", 5*CLOCK_SECOND);
+PERIODIC_RESOURCE(rssi, METHOD_GET, "sensors/rssi", "title=\"RSSI\"", 5*CLOCK_SECOND);
 
 void
 rssi_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
