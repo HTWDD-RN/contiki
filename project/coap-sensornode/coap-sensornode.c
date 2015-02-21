@@ -836,7 +836,9 @@ PROCESS_THREAD(rest_server_example, ev, data)
 #endif
 #endif /* PLATFORM_HAS_LEDS */
 #if defined (PLATFORM_HAS_SHT21) && REST_RES_SHT21
+  watchdog_stop();
   int result_sht21 = SENSORS_ACTIVATE(sht21_sensor);  
+  watchdog_start();
   if(result_sht21 == 1) { // ok
     rest_activate_periodic_resource(&periodic_resource_sht21_temperature);
     rest_activate_periodic_resource(&periodic_resource_sht21_humidity);
@@ -845,7 +847,9 @@ PROCESS_THREAD(rest_server_example, ev, data)
   }
 #endif
 #if defined (PLATFORM_HAS_BMP085) && REST_RES_BMP085
+  watchdog_stop();
   int result_bmp085 = SENSORS_ACTIVATE(bmp085_sensor);
+  watchdog_start();
   if(result_bmp085 == 1) { // ok
     rest_activate_periodic_resource(&periodic_resource_bmp085);
   } else { // error
