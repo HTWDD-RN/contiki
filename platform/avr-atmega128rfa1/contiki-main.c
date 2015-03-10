@@ -96,6 +96,8 @@
 #ifdef DE_RF_NODE
 #include "io_access.h"
 #include "usb.h"
+#include "twi_master.h"
+#include "i2c_sensors_interface.h"
 #endif /* DE_RF_NODE */
 
 extern rtimer_clock_t cycle_start;
@@ -193,6 +195,12 @@ void initialize(void)
      usb_io_init();
   }
 #endif /* DEBUG_USB */
+  /*  initialize TWI interface and connected sensors */
+  TWI_MasterInit();
+
+  BMA150_Init();
+  ISL29020_Init();
+  TMP102_Init();
 #else /* initialize UART */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.

@@ -47,6 +47,7 @@
 
 #ifdef DE_RF_NODE
 #include "io_access.h"
+#include "i2c_sensors_interface.h"
 #endif /* DE_RF_NODE */
 
 /* Define which resources to include to meet memory constraints. */
@@ -57,6 +58,9 @@
 #define REST_RES_BMP085 1
 #define REST_RES_BUTTON 1
 #define REST_RSSI 1
+#define REST_RES_TMP102 1
+#define REST_RES_ISL29020 1
+#define REST_RES_BMA150 1
 
 #if !UIP_CONF_IPV6_RPL && !defined (CONTIKI_TARGET_MINIMAL_NET) && !defined (CONTIKI_TARGET_NATIVE)
 #warning "Compiling with static routing!"
@@ -589,6 +593,264 @@ interntemp_periodic_handler(resource_t *r)
 
 #ifdef DE_RF_NODE
 
+#if REST_RES_BMA150
+PERIODIC_RESOURCE(acceleration, METHOD_GET, "sensors/acceleration", "title=\"BMA150 acceleration in [g]\";rt=\"Acceleration-g\";if=\"core.s\";obs", 60*CLOCK_SECOND);
+void
+acceleration_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  char accelstr[40] = "ERROR";
+  /*  acceleration sensor value */
+  acceleration_t accel;
+
+  /*  measure acceleration */
+  BMA150_GetAcceleration(&accel);
+
+  /*  print current acceleration values */
+  snprintf(accelstr, 40, "x: %c%d.%02d y: %c%d.%02d z: %c%d.%02d [g]\n",
+           (accel.acc_x_sign ? '-' : '+'),
+           accel.acc_x_integral,
+           accel.acc_x_fractional,
+           (accel.acc_y_sign ? '-' : '+'),
+           accel.acc_y_integral,
+           accel.acc_y_fractional,
+           (accel.acc_z_sign ? '-' : '+'),
+           accel.acc_z_integral,
+           accel.acc_z_fractional);
+
+  if (strcmp(accelstr, "ERROR") == 0)
+    REST.set_response_status(response, REST.status.INTERNAL_SERVER_ERROR);
+
+  const uint16_t *accept = NULL;
+  int num = REST.get_header_accept(request, &accept);
+
+  if ((num==0) || (num && accept[0]==REST.type.TEXT_PLAIN))
+  {
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "%s", accelstr);
+
+    REST.set_response_payload(response, (uint8_t *)buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_XML))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_XML);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "<acceleration value=\"%s\"/>", accelstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_JSON))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_JSON);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "{'acceleration':'%s'}", accelstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else
+  {
+    REST.set_response_status(response, REST.status.NOT_ACCEPTABLE);
+    const char *msg = "Supporting content-types text/plain, application/xml, and application/json";
+    REST.set_response_payload(response, msg, strlen(msg));
+  }
+}
+
+void
+acceleration_periodic_handler(resource_t *r)
+{
+  static uint16_t obs_counter = 0;
+  char accelstr[40] = "ERROR";
+  /*  acceleration sensor value */
+  acceleration_t accel;
+
+  /*  measure acceleration */
+  BMA150_GetAcceleration(&accel);
+
+  /*  print current acceleration values */
+  snprintf(accelstr, 40, "x: %c%d.%02d y: %c%d.%02d z: %c%d.%02d [g]\n",
+           (accel.acc_x_sign ? '-' : '+'),
+           accel.acc_x_integral,
+           accel.acc_x_fractional,
+           (accel.acc_y_sign ? '-' : '+'),
+           accel.acc_y_integral,
+           accel.acc_y_fractional,
+           (accel.acc_z_sign ? '-' : '+'),
+           accel.acc_z_integral,
+           accel.acc_z_fractional);
+  printf("%s\n", accelstr);
+
+  /* Build notification. */
+  coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
+  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_set_payload(notification, accelstr, strlen(accelstr));
+  if (strcmp(accelstr, "ERROR") == 0)
+    coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
+
+  /* Notify the registered observers with the given message type, observe option, and payload. */
+  REST.notify_subscribers(r, obs_counter, notification);
+}
+#endif /* REST_RES_BMA150 */
+
+#if REST_RES_ISL29020
+PERIODIC_RESOURCE(luminosity, METHOD_GET, "sensors/luminosity", "title=\"ISL29020 luminosity in [Lux]\";rt=\"Luminosity-Lux\";if=\"core.s\";obs", 60*CLOCK_SECOND);
+void
+luminosity_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  char lumistr[20] = "ERROR";
+  /*  luminosity sensor value */
+  luminosity_t lumi;
+
+  /*  measure luminosity */
+  ISL29020_StartOneshotMeasurement();
+  ISL29020_GetLuminosity(&lumi);
+
+  /*  print current luminosity sensor value */
+  snprintf(lumistr, 20, "%d [Lux]\n", lumi);
+
+  if (strcmp(lumistr, "ERROR") == 0)
+    REST.set_response_status(response, REST.status.INTERNAL_SERVER_ERROR);
+
+  const uint16_t *accept = NULL;
+  int num = REST.get_header_accept(request, &accept);
+
+  if ((num==0) || (num && accept[0]==REST.type.TEXT_PLAIN))
+  {
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "%s", lumistr);
+
+    REST.set_response_payload(response, (uint8_t *)buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_XML))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_XML);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "<luminosity value=\"%s\"/>", lumistr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_JSON))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_JSON);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "{'luminosity':'%s'}", lumistr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else
+  {
+    REST.set_response_status(response, REST.status.NOT_ACCEPTABLE);
+    const char *msg = "Supporting content-types text/plain, application/xml, and application/json";
+    REST.set_response_payload(response, msg, strlen(msg));
+  }
+}
+
+void
+luminosity_periodic_handler(resource_t *r)
+{
+  static uint16_t obs_counter = 0;
+  char lumistr[20] = "ERROR";
+  /*  luminosity sensor value */
+  luminosity_t lumi;
+
+  /*  measure luminosity */
+  ISL29020_StartOneshotMeasurement();
+  ISL29020_GetLuminosity(&lumi);
+
+  /*  print current luminosity sensor value */
+  snprintf(lumistr, 20, "%d [Lux]\n", lumi);
+  printf("%s\n", lumistr);
+
+  /* Build notification. */
+  coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
+  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_set_payload(notification, lumistr, strlen(lumistr));
+  if (strcmp(lumistr, "ERROR") == 0)
+    coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
+
+  /* Notify the registered observers with the given message type, observe option, and payload. */
+  REST.notify_subscribers(r, obs_counter, notification);
+}
+#endif /* REST_RES_ISL29020 */
+
+#if REST_RES_TMP102
+PERIODIC_RESOURCE(tmp102_temp, METHOD_GET, "sensors/tmp102_temp", "title=\"TMP102 temperatur in [°C]\";rt=\"Temperature-C\";if=\"core.s\";obs", 60*CLOCK_SECOND);
+void
+tmp102_temp_handler(void* request, void* response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
+{
+  char tempstr[20] = "ERROR";
+  /* temperature sensor value */
+  temperature_t temp;
+
+  /* measure temperature */
+  TMP102_StartOneshotMeasurement();
+  TMP102_GetTemperature(&temp, true);
+
+  /* princt current temperature */
+  snprintf(tempstr, 20, "%c%d.%02d [°C]\n", (temp.sign ? '-' : '+'),
+           temp.integralDigit,
+           temp.fractionalDigit);
+
+  if (strcmp(tempstr, "ERROR") == 0)
+    REST.set_response_status(response, REST.status.INTERNAL_SERVER_ERROR);
+
+  const uint16_t *accept = NULL;
+  int num = REST.get_header_accept(request, &accept);
+
+  if ((num==0) || (num && accept[0]==REST.type.TEXT_PLAIN))
+  {
+    REST.set_header_content_type(response, REST.type.TEXT_PLAIN);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "%s", tempstr);
+
+    REST.set_response_payload(response, (uint8_t *)buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_XML))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_XML);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "<temperature value=\"%s\"/>", tempstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else if (num && (accept[0]==REST.type.APPLICATION_JSON))
+  {
+    REST.set_header_content_type(response, REST.type.APPLICATION_JSON);
+    snprintf((char *)buffer, REST_MAX_CHUNK_SIZE, "{'temperature':'%s'}", tempstr);
+
+    REST.set_response_payload(response, buffer, strlen((char *)buffer));
+  }
+  else
+  {
+    REST.set_response_status(response, REST.status.NOT_ACCEPTABLE);
+    const char *msg = "Supporting content-types text/plain, application/xml, and application/json";
+    REST.set_response_payload(response, msg, strlen(msg));
+  }
+}
+
+void
+tmp102_temp_periodic_handler(resource_t *r)
+{
+  static uint16_t obs_counter = 0;
+  char tempstr[20] = "ERROR";
+  /* temperature sensor value */
+  temperature_t temp;
+
+  /* measure temperature */
+  TMP102_StartOneshotMeasurement();
+  TMP102_GetTemperature(&temp, true);
+
+  /* princt current temperature */
+  snprintf(tempstr, 20, "%c%d.%02d [°C]\n", (temp.sign ? '-' : '+'),
+           temp.integralDigit,
+           temp.fractionalDigit);
+
+  printf("%s\n", tempstr);
+
+  /* Build notification. */
+  coap_packet_t notification[1]; /* This way the packet can be treated as pointer as usual. */
+  coap_init_message(notification, COAP_TYPE_NON, REST.status.OK, 0 );
+  coap_set_payload(notification, tempstr, strlen(tempstr));
+  if (strcmp(tempstr, "ERROR") == 0)
+    coap_set_status_code(notification, REST.status.INTERNAL_SERVER_ERROR);
+
+  /* Notify the registered observers with the given message type, observe option, and payload. */
+  REST.notify_subscribers(r, obs_counter, notification);
+}
+#endif /* REST_RES_TMP102 */
+
 /******************************************************************************/
 #if REST_RES_LEDS
 /*A simple actuator example, depending on the number query parameter and post variable mode, corresponding led is activated or deactivated*/
@@ -721,7 +983,7 @@ battery_periodic_handler(resource_t *r)
   /* Notify the registered observers with the given message type, observe option, and payload. */
   REST.notify_subscribers(r, obs_counter, notification);
 }
-#endif
+#endif /* DE_RF_NODE */
 
 #if REST_RSSI && defined (__AVR_ATmega128RFA1__)
 PERIODIC_RESOURCE(rssi, METHOD_GET, "sensors/rssi", "title=\"RSSI\"", 5*CLOCK_SECOND);
@@ -860,6 +1122,15 @@ PROCESS_THREAD(rest_server_example, ev, data)
 #if REST_RES_LEDS
   rest_activate_resource(&resource_leds_onboard);
 #endif /* REST_RES_LEDS */
+#if REST_RES_TMP102
+  rest_activate_resource(&resource_tmp102_temp);
+#endif /* REST_RES_TMP102 */
+#if REST_RES_ISL29020
+  rest_activate_resource(&resource_luminosity);
+#endif /* REST_RES_ISL29020 */
+#if REST_RES_BMA150
+  rest_activate_resource(&resource_acceleration);
+#endif /* REST_RES_BMA150 */
 #endif /* DE_RF_NODE */
 
 
