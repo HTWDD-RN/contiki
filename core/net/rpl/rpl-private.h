@@ -90,6 +90,14 @@
 
 #define RPL_DAO_K_FLAG                   0x80 /* DAO ACK requested */
 #define RPL_DAO_D_FLAG                   0x40 /* DODAG ID present */
+
+#define RPL_DAO_ACK_UNCONDITIONAL_ACCEPT 0
+#define RPL_DAO_ACK_ACCEPT               1   /* 1 - 127 is OK but not good */
+#define RPL_DAO_ACK_UNABLE_TO_ACCEPT     128 /* >127 is fail */
+#define RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT 255 /* root can not accept */
+
+#define RPL_DAO_ACK_TIMEOUT              -1
+
 /*---------------------------------------------------------------------------*/
 /* RPL IPv6 extension header option. */
 #define RPL_HDR_OPT_LEN			4
@@ -103,12 +111,31 @@
 /*---------------------------------------------------------------------------*/
 /* Default values for RPL constants and variables. */
 
-/* The default value for the DAO timer. */
-#ifdef RPL_CONF_DAO_LATENCY
-#define RPL_DAO_LATENCY                 RPL_CONF_DAO_LATENCY
-#else /* RPL_CONF_DAO_LATENCY */
-#define RPL_DAO_LATENCY                 (CLOCK_SECOND * 4)
-#endif /* RPL_DAO_LATENCY */
+/* DAO transmissions are always delayed by RPL_DAO_DELAY +/- RPL_DAO_DELAY/2 */
+#ifdef RPL_CONF_DAO_DELAY
+#define RPL_DAO_DELAY                 RPL_CONF_DAO_DELAY
+#else /* RPL_CONF_DAO_DELAY */
+#define RPL_DAO_DELAY                 (CLOCK_SECOND * 4)
+#endif /* RPL_CONF_DAO_DELAY */
+
+/* Delay between reception of a no-path DAO and actual route removal */
+#ifdef RPL_CONF_NOPATH_REMOVAL_DELAY
+#define RPL_NOPATH_REMOVAL_DELAY          RPL_CONF_NOPATH_REMOVAL_DELAY
+#else /* RPL_CONF_NOPATH_REMOVAL_DELAY */
+#define RPL_NOPATH_REMOVAL_DELAY          60
+#endif /* RPL_CONF_NOPATH_REMOVAL_DELAY */
+
+#ifdef RPL_CONF_DAO_MAX_RETRANSMISSIONS
+#define RPL_DAO_MAX_RETRANSMISSIONS RPL_CONF_DAO_MAX_RETRANSMISSIONS
+#else
+#define RPL_DAO_MAX_RETRANSMISSIONS     5
+#endif /* RPL_CONF_DAO_MAX_RETRANSMISSIONS */
+
+#ifdef RPL_CONF_DAO_RETRANSMISSION_TIMEOUT
+#define RPL_DAO_RETRANSMISSION_TIMEOUT RPL_CONF_DAO_RETRANSMISSION_TIMEOUT
+#else
+#define RPL_DAO_RETRANSMISSION_TIMEOUT  (5 * CLOCK_SECOND)
+#endif /* RPL_CONF_DAO_RETRANSMISSION_TIMEOUT */
 
 /* Special value indicating immediate removal. */
 #define RPL_ZERO_LIFETIME               0
@@ -134,9 +161,6 @@
 
 #define INFINITE_RANK                   0xffff
 
-
-/* Expire DAOs from neighbors that do not respond in this time. (seconds) */
-#define DAO_EXPIRATION_TIMEOUT          60
 /*---------------------------------------------------------------------------*/
 #define RPL_INSTANCE_LOCAL_FLAG         0x80
 #define RPL_INSTANCE_D_FLAG             0x40
@@ -184,12 +208,7 @@
 
 /* DIS related */
 #define RPL_DIS_SEND                    1
-#ifdef  RPL_DIS_INTERVAL_CONF
-#define RPL_DIS_INTERVAL                RPL_DIS_INTERVAL_CONF
-#else
-#define RPL_DIS_INTERVAL                60
-#endif
-#define RPL_DIS_START_DELAY             5
+
 /*---------------------------------------------------------------------------*/
 /* Lollipop counters */
 
@@ -251,6 +270,8 @@ typedef struct rpl_stats rpl_stats_t;
 
 extern rpl_stats_t rpl_stats;
 #endif
+
+
 /*---------------------------------------------------------------------------*/
 /* RPL macros. */
 
@@ -269,8 +290,10 @@ void dis_output(uip_ipaddr_t *addr);
 void dio_output(rpl_instance_t *, uip_ipaddr_t *uc_addr);
 void dao_output(rpl_parent_t *, uint8_t lifetime);
 void dao_output_target(rpl_parent_t *, uip_ipaddr_t *, uint8_t lifetime);
-void dao_ack_output(rpl_instance_t *, uip_ipaddr_t *, uint8_t);
+void dao_ack_output(rpl_instance_t *, uip_ipaddr_t *, uint8_t, uint8_t);
 void rpl_icmp6_register_handlers(void);
+uip_ds6_nbr_t *rpl_icmp6_update_nbr_table(uip_ipaddr_t *from,
+                                          nbr_table_reason_t r, void *data);
 
 /* RPL logic functions. */
 void rpl_join_dag(uip_ipaddr_t *from, rpl_dio_t *dio);
@@ -284,6 +307,7 @@ rpl_dag_t *rpl_alloc_dag(uint8_t, uip_ipaddr_t *);
 rpl_instance_t *rpl_alloc_instance(uint8_t);
 void rpl_free_dag(rpl_dag_t *);
 void rpl_free_instance(rpl_instance_t *);
+void rpl_purge_dags(void);
 
 /* DAG parent management function. */
 rpl_parent_t *rpl_add_parent(rpl_dag_t *, rpl_dio_t *dio, uip_ipaddr_t *);
@@ -303,15 +327,13 @@ uip_ds6_route_t *rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix,
                                int prefix_len, uip_ipaddr_t *next_hop);
 void rpl_purge_routes(void);
 
-/* Lock a parent in the neighbor cache. */
-void rpl_lock_parent(rpl_parent_t *p);
-
 /* Objective function. */
 rpl_of_t *rpl_find_of(rpl_ocp_t);
 
 /* Timer functions. */
 void rpl_schedule_dao(rpl_instance_t *);
 void rpl_schedule_dao_immediately(rpl_instance_t *);
+void rpl_schedule_unicast_dio_immediately(rpl_instance_t *instance);
 void rpl_cancel_dao(rpl_instance_t *instance);
 void rpl_schedule_probing(rpl_instance_t *instance);
 
