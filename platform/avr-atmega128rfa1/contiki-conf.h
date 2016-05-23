@@ -176,7 +176,8 @@ typedef unsigned short uip_stats_t;
 /* s74742@htw-dresden.de: Added this line. Otherwiese project er-rest-example wont compile. */
 #define UIP_CONF_BUFFER_SIZE 240
 
-#if 1 /* No radio cycling */
+/* s74742@htw-dresden.de: Radio cycling activated (1 -> 0). */
+#if 0 /* No radio cycling */
 
 #define NETSTACK_CONF_MAC         nullmac_driver
 #define NETSTACK_CONF_RDC         sicslowmac_driver
@@ -234,10 +235,13 @@ typedef unsigned short uip_stats_t;
 /* Not tested much yet */
 #define WITH_PHASE_OPTIMIZATION                0
 #define CONTIKIMAC_CONF_COMPOWER               1
-#define RIMESTATS_CONF_ENABLED                 1
 
+/* s74742@htw-dresden.de: Leads to compilation errors. Therefore disabled (1 -> 0). */
+#define RIMESTATS_CONF_ENABLED                 0
+
+/* s74742@htw-dresden.de: Changed framer802154 to framer_802154. Otherwise we get an compilation error. */
 #if NETSTACK_CONF_WITH_IPV6
-#define NETSTACK_CONF_FRAMER      framer802154
+#define NETSTACK_CONF_FRAMER      framer_802154
 #else /* NETSTACK_CONF_WITH_IPV6 */
 #define NETSTACK_CONF_FRAMER      contikimac_framer
 #endif /* NETSTACK_CONF_WITH_IPV6 */
