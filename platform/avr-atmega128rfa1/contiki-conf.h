@@ -173,6 +173,8 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_TCP_SPLIT       1
 #define UIP_CONF_DHCP_LIGHT      1
 
+/* s74742@htw-dresden.de: Added this line. Otherwiese project er-rest-example wont compile. */
+#define UIP_CONF_BUFFER_SIZE 240
 
 #if 1 /* No radio cycling */
 

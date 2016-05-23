@@ -125,3 +125,5 @@ platform/galileo/bsp/grub/bin/
 *.galileo.dll
 *.galileo.efi
 LOG_OPENOCD
+
+*.avr-atmega128rfa1
