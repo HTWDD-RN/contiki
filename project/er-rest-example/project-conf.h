@@ -106,3 +106,9 @@
 /* Enable client-side support for COAP observe */
 #define COAP_OBSERVE_CLIENT 1
 #endif /* __PROJECT_ERBIUM_CONF_H__ */
+
+//#define RF230_CONF_CCA_THRES -90
+#define RF230_CONF_CCA_CARRIER_SENSE_ONLY 1
+
+/* s74742@htw-dresden.de: Utilize LED D1 (deRFnode board) to show active radio module. */
+#define RADIO_INDICATOR_LED_ON_PORT_G5 1

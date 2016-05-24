@@ -274,6 +274,8 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_DS6_MADDR_NBU    0
 #define UIP_CONF_DS6_AADDR_NBU    0
 
+/* s74742@htw-dresden.de: Fast sleep disabled for better results. */
+#define WITH_FAST_SLEEP 0
 
 #elif 1  /* cx-mac radio cycling */
 /* RF230 does clear-channel assessment in extended mode (autoretries>0) */
