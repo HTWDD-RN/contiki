@@ -170,6 +170,17 @@ rng_get_uint8(void) {
 /*------Done in a subroutine to keep main routine stack usage small--------*/
 void initialize(void)
 {
+/*
+ * s74742@htw-dresden.de: Configure the clock prescaler to divide the clock speed by 2, 4, 8, ...
+ */
+#ifdef SET_CLOCK_PRESCALER_REGISTER
+  uint8_t volatile saved_sreg = SREG; // Save interrupt state (enabled or disabled).
+  cli(); // Disable all interrupts.
+  CLKPR = (1<<CLKPCE); // The CLKPR must be written twice within ...
+  CLKPR = SET_CLOCK_PRESCALER_REGISTER; // ... two cpu cycles to take effect.
+  SREG = saved_sreg; // Set interrupt state back to that it was before we disabled them.
+#endif /* SET_CLOCK_PRESCALER_REGISTER */
+
   watchdog_init();
   watchdog_start();
 

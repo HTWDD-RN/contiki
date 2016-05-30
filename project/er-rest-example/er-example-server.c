@@ -105,6 +105,13 @@ AUTOSTART_PROCESSES(&er_example_server);
 
 PROCESS_THREAD(er_example_server, ev, data)
 {
+  /*
+   * s74742@htw-dresden.de: Uncomment the following line, to prevent ContikiMac
+   * from switching off the radio. This doesn't make sense at all, expect for
+   * debugging purposes.
+   */
+  //NETSTACK_MAC.off(1);
+
   PROCESS_BEGIN();
 
   PROCESS_PAUSE();

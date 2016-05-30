@@ -45,8 +45,17 @@
 #define PLATFORM_NAME  "RFA1"
 #define PLATFORM_TYPE  ATMEGA128RFA1
 #ifndef F_CPU
-#define F_CPU          16000000UL
+#define F_CPU          8000000UL //16000000UL
 #endif
+
+/*
+ * s74742@htw-dresden.de:
+ * We are currently using the 16 MHz Transceiver Crystal Oscillator as clock source (Low-Fuse-Byte: 0xD7).
+ * Set the prescaler such that the cpu clock speed will be 8 HMz (divide clock source speed by 2).
+ * So we get better results with ContikiMac, but don't figured out why so fare.
+ * If changing that, don't forget to adjust F_CPU (see above) and -DF_CPU parameter in Makefile.avr-atmega128rfa1.
+ */
+#define SET_CLOCK_PRESCALER_REGISTER 1
 
 #include <stdint.h>
 
