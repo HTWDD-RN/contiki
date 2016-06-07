@@ -243,6 +243,7 @@ typedef unsigned short uip_stats_t;
 #define CONTIKIMAC_FRAMER_CONF_SHORTEST_PACKET_SIZE   43-18  //multicast RPL DIS length
 /* Not tested much yet */
 #define WITH_PHASE_OPTIMIZATION                0
+//#define CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION	0
 #define CONTIKIMAC_CONF_COMPOWER               1
 
 /* s74742@htw-dresden.de: Leads to compilation errors. Therefore disabled (1 -> 0). */

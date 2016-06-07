@@ -112,3 +112,9 @@
 
 /* s74742@htw-dresden.de: Utilize LED D1 (deRFnode board) to show active radio module. */
 #define RADIO_INDICATOR_LED_ON_PORT_G5 1
+
+/* s74742@htw-dresden.de: Utilize LED D2 (deRFnode board) to indicate incoming ping6 requests. */
+#define INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3 1
+
+
+#define NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4 1

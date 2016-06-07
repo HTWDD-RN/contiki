@@ -198,13 +198,29 @@ void initialize(void)
 #endif
 
 /*
- * s74742@htw-dresden.de: Utilize LED (D1) on deRFnode board from
+ * s74742@htw-dresden.de: Utilize LED D1 on deRFnode board from
  * Dresden Elektronik to indicate active radio module.
  */
 #ifdef RADIO_INDICATOR_LED_ON_PORT_G5
   DDRG|=(1<<DDG5);
   PORTG&=~(1<<PG5);
 #endif /* RADIO_INDICATOR_LED_ON_PORT_G5 */
+
+/*
+* s74742@htw-dresden.de: Utilize LED D2 to indicate incoming ping requests.
+*/
+#ifdef INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3
+	DDRE|=(1<<DDE3);
+	PORTE|=(1<<PE3);
+#endif /* INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3 */
+
+/*
+* s74742@htw-dresden.de: Utilize LED D3 to indicate that a neighbor was found.
+*/
+#ifdef NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4
+	DDRE|=(1<<DDE4);
+	PORTE&=~(1<<PE4);
+#endif /* NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4 */
 
   /* Second rs232 port for debugging or slip alternative */
   rs232_init(RS232_PORT_1, USART_BAUD_57600,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
