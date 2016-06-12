@@ -107,8 +107,11 @@
 #define COAP_OBSERVE_CLIENT 1
 #endif /* __PROJECT_ERBIUM_CONF_H__ */
 
-//#define RF230_CONF_CCA_THRES -90
-#define RF230_CONF_CCA_CARRIER_SENSE_ONLY 1
+/* s74742@htw-dresden.de: We are using deRFnode board from dresden elektronik. */
+#define DE_RF_NODE 1
+
+/* s74742@htw-dresden.de: Using the USB connector on deRFnode board to receive debugging messages. */
+#define DE_RF_NODE_USB_DEBUG 1
 
 /* s74742@htw-dresden.de: Utilize LED D1 (deRFnode board) to show active radio module. */
 #define RADIO_INDICATOR_LED_ON_PORT_G5 1
@@ -116,5 +119,5 @@
 /* s74742@htw-dresden.de: Utilize LED D2 (deRFnode board) to indicate incoming ping6 requests. */
 #define INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3 1
 
-
+/* s74742@htw-dresden.de: Utilize LED D3 (deRFnode board) to indicate that a neighbor was found. */
 #define NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4 1

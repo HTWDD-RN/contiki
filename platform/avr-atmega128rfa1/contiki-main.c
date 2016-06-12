@@ -90,6 +90,9 @@
 
 #include "net/rime/rime.h"
 
+#include "usb.h"
+#include "dev/adc.h"
+
 /* Track interrupt flow through mac, rdc and radio driver */
 //#define DEBUGFLOWSIZE 32
 #if DEBUGFLOWSIZE
@@ -184,6 +187,17 @@ void initialize(void)
   watchdog_init();
   watchdog_start();
 
+#ifdef DE_RF_NODE
+/* s74742@htw-dresden.de: Using the USB connector on deRFnode board to let the node send debugging messages through. */
+#ifdef DE_RF_NODE_USB_DEBUG
+  /* Only do this, if a computer is connected to the USB port (respectively power comes from USB). To check that, we
+   * can monitor Port PF1 (see deRFnode and deRFgateway user manual, chapter 8.9 - USB supply voltage monitoring).
+   */
+  if (readADC(PF1)) {
+    usb_io_init();
+  }
+#endif /* DE_RF_NODE_USB_DEBUG */
+#else /* DE_RF_NODE */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
@@ -196,6 +210,17 @@ void initialize(void)
   rs232_init(RS232_PORT_0, USART_BAUD_38400,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
 #endif
 #endif
+
+  /* Second rs232 port for debugging or slip alternative */
+  rs232_init(RS232_PORT_1, USART_BAUD_57600,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
+
+/* Redirect stdout */
+#if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
+  rs232_redirect_stdout(RS232_PORT_1);
+#else
+  rs232_redirect_stdout(RS232_PORT_0);
+#endif
+#endif /* DE_RF_NODE */
 
 /*
  * s74742@htw-dresden.de: Utilize LED D1 on deRFnode board from
@@ -222,14 +247,6 @@ void initialize(void)
 	PORTE&=~(1<<PE4);
 #endif /* NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4 */
 
-  /* Second rs232 port for debugging or slip alternative */
-  rs232_init(RS232_PORT_1, USART_BAUD_57600,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-  /* Redirect stdout */
-#if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
-  rs232_redirect_stdout(RS232_PORT_1);
-#else
-  rs232_redirect_stdout(RS232_PORT_0);
-#endif
   clock_init();
 
   if(MCUSR & (1<<PORF )) PRINTD("Power-on reset.\n");
