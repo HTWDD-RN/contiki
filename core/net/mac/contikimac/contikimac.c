@@ -470,9 +470,16 @@ powercycle(struct rtimer *t, void *ptr)
           break;
         }
 
-        schedule_powercycle(t, CCA_CHECK_TIME + CCA_SLEEP_TIME);
-        PT_YIELD(&pt);
+        /*
+         * s74742@htw-dresden.de: Fixed problem with high packet loss due to
+         * long off time of radio module by commenting out those two lines.
+         * TODO: Figure out, why that solves the problem. Does it have any
+         * negative side effects?
+         */
+        /*schedule_powercycle(t, CCA_CHECK_TIME + CCA_SLEEP_TIME);
+        PT_YIELD(&pt);*/
       }
+
       if(radio_is_on) {
         if(!(NETSTACK_RADIO.receiving_packet() ||
              NETSTACK_RADIO.pending_packet()) ||
