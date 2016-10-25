@@ -6,6 +6,9 @@ CONTIKI_TARGET_SOURCEFILES += contiki-main.c params.c usb-de-rfnode.c adc.c
 #Needed for slip
 CONTIKI_TARGET_SOURCEFILES += button-sensor.c sensors.c slip_uart0.c slip.c
 
+# s74742@htw-dresden.de
+CONTIKI_TARGET_SOURCEFILES += i2c_sensors.c twi_master.c
+
 CONTIKIAVR=$(CONTIKI)/cpu/avr
 CONTIKIBOARD=.
 

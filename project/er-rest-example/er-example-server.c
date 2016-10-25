@@ -87,6 +87,10 @@ extern resource_t res_battery;
 #include "dev/temperature-sensor.h"
 extern resource_t res_temperature;
 #endif
+
+// For deRFnode specific sensors.
+extern resource_t res_derfnode_tmp102, res_derfnode_battery, res_derfnode_isl29020, res_derfnode_bam150;
+
 /*
 extern resource_t res_battery;
 #endif
@@ -162,6 +166,14 @@ PROCESS_THREAD(er_example_server, ev, data)
   rest_activate_resource(&res_temperature, "sensors/temperature");  
   SENSORS_ACTIVATE(temperature_sensor);  
 #endif
+
+// For deRFnode specific sensors.
+rest_activate_resource(&res_derfnode_tmp102, "sensors/tmp102_temp");
+rest_activate_resource(&res_derfnode_battery, "sensors/battery");
+rest_activate_resource(&res_derfnode_isl29020, "sensors/luminosity");
+rest_activate_resource(&res_derfnode_bam150, "sensors/acceleration");
+//SENSORS_ACTIVATE(temperature_sensor);
+
 /*
 #if PLATFORM_HAS_RADIO
   rest_activate_resource(&res_radio, "sensors/radio");  

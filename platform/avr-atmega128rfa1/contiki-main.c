@@ -92,6 +92,8 @@
 
 #include "usb.h"
 #include "dev/adc.h"
+#include "twi_master.h"
+#include "i2c_sensors_interface.h"
 
 /* Track interrupt flow through mac, rdc and radio driver */
 //#define DEBUGFLOWSIZE 32
@@ -197,6 +199,13 @@ void initialize(void)
     usb_io_init();
   }
 #endif /* DE_RF_NODE_USB_DEBUG */
+
+	/*  initialize TWI interface and connected sensors */
+	TWI_MasterInit();
+
+	BMA150_Init();
+	ISL29020_Init();
+	TMP102_Init();
 #else /* DE_RF_NODE */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
