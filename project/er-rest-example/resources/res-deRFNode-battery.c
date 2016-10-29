@@ -89,13 +89,6 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
 static void
 res_periodic_handler()
 {
-	/*
-	 * Periodic handler does not work yet. Leads node to not respond to requests (coap, ping)
-	 * anymore within a few seconds until reset the node.
-	 * Must do something with sleep mode, because it's working then sleep mode disabled (comment out
-	 * #define RDC_CONF_MCU_SLEEP 1 in platform/avr-atmega128rfa1/contiki-conf.h).
-	 */
-
 	PRINTF("Periodic handler for battery sensor called.\n");  // For debugging.
 
 	// >>>
@@ -109,6 +102,7 @@ res_periodic_handler()
 
   ++interval_counter;
 
+  // Notify observers only if sensor value has changed enough or a maximum period of time elapsed.
   if((abs(voltage - voltage_old) >= CHANGE && interval_counter >= INTERVAL_MIN) || 
      interval_counter >= INTERVAL_MAX) {
      interval_counter = 0;

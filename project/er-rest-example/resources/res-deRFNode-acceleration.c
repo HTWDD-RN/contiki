@@ -103,6 +103,6 @@ static void
 res_periodic_handler()
 {
 	PRINTF("Periodic handler for acceleration sensor called.\n");  // For debugging.
-    REST.notify_subscribers(&res_derfnode_bam150);
+    REST.notify_subscribers(&res_derfnode_bam150); //Notify the registered observers which will trigger the res_get_handler to create the response.
 }
 #endif /* DE_RF_NODE */

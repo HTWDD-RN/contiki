@@ -35,14 +35,34 @@ static void res_periodic_handler(void);
 static int32_t interval_counter = INTERVAL_MIN;
 static luminosity_t lumi_old = 0;
 
-PERIODIC_RESOURCE(res_derfnode_isl29020,
+/*
+ * BUG: Due to a bug, querying the ISL29020 sensor as periodic ressource (needed
+ * for CoAP subscriptions) will cause the node to get stuck after a while. The
+ * node will not respond to any request (CoAP, ping, etc.) then, until system
+ * reset. Must to do something with sleep mode, because it's working then sleep
+ * mode is disabled (comment out #define RDC_CONF_MCU_SLEEP 1 in platform/
+ * avr-atmega128rfa1/contiki-conf.h).
+ * Therefor we set up a non-periodic ressource (res_periodic_handler (see
+ * above) is never called). This simply means to disable subsscriptions for this
+ * ressource as work around.
+ */
+// Setup non-periodic ressource (no subsscription handliing).
+RESOURCE(res_derfnode_isl29020,
+         "title=\"ISL29020 luminosity in [Lux]\";rt=\"Luminosity-Lux\";obs",
+         res_get_handler,
+         NULL,
+         NULL,
+         NULL);
+
+// Setup periodic ressource for subscription handling.
+/*PERIODIC_RESOURCE(res_derfnode_isl29020,
          "title=\"ISL29020 luminosity in [Lux]\";rt=\"Luminosity-Lux\";obs",
          res_get_handler,
          NULL,
          NULL,
          NULL,
          60*CLOCK_SECOND,
-         res_periodic_handler);
+         res_periodic_handler);*/
 
 static void
 res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)

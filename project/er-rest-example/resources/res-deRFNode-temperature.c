@@ -29,14 +29,34 @@ static void res_periodic_handler(void);
 
 #define MAX_AGE      60
 
-PERIODIC_RESOURCE(res_derfnode_tmp102,
+/*
+ * BUG: Due to a bug, querying the TMP102 sensor as periodic ressource (needed
+ * for CoAP subscriptions) will cause the node to get stuck after a while. The
+ * node will not respond to any request (CoAP, ping, etc.) then, until system
+ * reset. Must to do something with sleep mode, because it's working then sleep
+ * mode is disabled (comment out #define RDC_CONF_MCU_SLEEP 1 in platform/
+ * avr-atmega128rfa1/contiki-conf.h).
+ * Therefor we set up a non-periodic ressource (res_periodic_handler (see
+ * above) is never called). This simply means to disable subsscriptions for this
+ * ressource as work around.
+ */
+// Setup non-periodic ressource (no subsscription handliing).
+RESOURCE(res_derfnode_tmp102,
+         "title=\"Temperature\";rt=\"Temperature\";obs",
+         res_get_handler,
+         NULL,
+         NULL,
+         NULL);
+
+// Setup periodic ressource for subscription handling.
+/*PERIODIC_RESOURCE(res_derfnode_tmp102,
          "title=\"Temperature\";rt=\"Temperature\";obs",
          res_get_handler,
          NULL,
          NULL,
          NULL,
          60*CLOCK_SECOND, // Call res_periodic_handler every minute.
-         res_periodic_handler);
+         res_periodic_handler);*/
 
 static void
 res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
@@ -89,14 +109,7 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
 static void
 res_periodic_handler()
 {
-	/*
-	 * Periodic handler does not work yet. If a client subscribes, node will crash within short.
-	 * Must to do something with sleep mode, because it's working then sleep mode disabled (comment out
-	 * #define RDC_CONF_MCU_SLEEP 1 in platform/avr-atmega128rfa1/contiki-conf.h).
-	 */
-
 	PRINTF("Periodic handler for temperature sensor called.\n");  // For debugging.
-
-	REST.notify_subscribers(&res_derfnode_tmp102);
+	REST.notify_subscribers(&res_derfnode_tmp102); //Notify the registered observers which will trigger the res_get_handler to create the response.
 }
 #endif /* DE_RF_NODE */
