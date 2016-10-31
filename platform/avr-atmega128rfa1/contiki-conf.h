@@ -289,6 +289,9 @@ typedef unsigned short uip_stats_t;
 /* s74742@htw-dresden.de: Fast sleep disabled for better results. */
 #define WITH_FAST_SLEEP 0
 
+/* Disable ContikiMac wake cycle to save even more energy. */
+#define CONTIKIMAC_CONF_NO_WAKE_CYCLE 1
+
 #elif 1  /* cx-mac radio cycling */
 /* RF230 does clear-channel assessment in extended mode (autoretries>0) */
 /* These values are guesses */

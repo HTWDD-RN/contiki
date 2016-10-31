@@ -496,6 +496,15 @@ powercycle(struct rtimer *t, void *ptr)
 	 ensure an occasional wake cycle or foreground processing will
 	 be blocked until a packet is detected */
 #if RDC_CONF_MCU_SLEEP
+	// Wake cycle could be disabled to save even more energy.
+#if CONTIKIMAC_CONF_NO_WAKE_CYCLE
+      if(!we_are_sending && !radio_is_on) {
+        rtimer_arch_sleep(CYCLE_TIME - (RTIMER_NOW() - cycle_start));
+      } else {
+        schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
+        PT_YIELD(&pt);
+      }
+#else // CONTIKIMAC_CONF_NO_WAKE_CYCLE
       static uint8_t sleepcycle;
       if((sleepcycle++ < 16) && !we_are_sending && !radio_is_on) {
         rtimer_arch_sleep(CYCLE_TIME - (RTIMER_NOW() - cycle_start));
@@ -504,10 +513,11 @@ powercycle(struct rtimer *t, void *ptr)
         schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
         PT_YIELD(&pt);
       }
-#else
+#endif // CONTIKIMAC_CONF_NO_WAKE_CYCLE
+#else // RDC_CONF_MCU_SLEEP
       schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
       PT_YIELD(&pt);
-#endif
+#endif // RDC_CONF_MCU_SLEEP
     }
   }
 
