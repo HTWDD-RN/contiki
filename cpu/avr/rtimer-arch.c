@@ -261,7 +261,7 @@ uint32_t longhowlong;
 #elif 0  // Prescale by 128 -  256 ticks/sec, 1 seconds max sleep
 	TCCR2B =((1<<CS22)|(0<<CS21)|(1<<CS20));
 	longhowlong=howlong*256UL;
-#elif 0  // Prescale by  64 -  512 ticks/sec, 500 msec max sleep
+#elif 1  // Prescale by  64 -  512 ticks/sec, 500 msec max sleep
 	TCCR2B =((1<<CS22)|(0<<CS21)|(0<<CS20));
 	longhowlong=howlong*512UL;
 #elif 1  // Prescale by  32 - 1024 ticks/sec, 250 msec max sleep
