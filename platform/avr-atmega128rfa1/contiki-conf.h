@@ -137,6 +137,9 @@ typedef unsigned short uip_stats_t;
 /* 1 - 15 maps into -90 to -48 dBm; the register is written with RF230_MIN_RX_POWER/6 + 1. Undefine for -100dBm sensitivity */
 //#define RF230_MIN_RX_POWER        0
 
+// Using carrier sense in cca check dramatically improves connection quality when using mac protocols.
+#define RF230_CONF_CCA_CARRIER_SENSE_ONLY 1
+
 /* Network setup */
 /* TX routine passes the cca/ack result in the return parameter */
 #define RDC_CONF_HARDWARE_ACK    1
