@@ -94,6 +94,7 @@
 #include "dev/adc.h"
 #include "twi_master.h"
 #include "i2c_sensors_interface.h"
+#include "io_access.h"
 
 /* Track interrupt flow through mac, rdc and radio driver */
 //#define DEBUGFLOWSIZE 32
@@ -206,6 +207,8 @@ void initialize(void)
 	BMA150_Init();
 	ISL29020_Init();
 	TMP102_Init();
+	
+	io_init(); // Initialize helper functions for LEDs and buttons of deRFnode board (see io_access.[c|h]).
 #else /* DE_RF_NODE */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.

@@ -42,6 +42,7 @@
 #include "contiki.h"
 #include "contiki-net.h"
 #include "rest-engine.h"
+#include "io_access.h"
 
 #if PLATFORM_HAS_BUTTON
 #include "dev/button-sensor.h"
@@ -110,11 +111,13 @@ AUTOSTART_PROCESSES(&er_example_server);
 PROCESS_THREAD(er_example_server, ev, data)
 {
   /*
-   * s74742@htw-dresden.de: Uncomment the following line, to prevent ContikiMac
-   * from switching off the radio. This doesn't make sense at all, expect for
-   * debugging purposes.
+   * s74742@htw-dresden.de: Prevent ContikiMac from switching off the radio if
+   * button 1 (the one closer to the LED's) were held down at boot time.
+   * ContikiMac will be used then but radio is always on.
    */
-  //NETSTACK_MAC.off(1);
+  if (button_pressed(BUTTON_0) == BUTTON_PRESSED) {
+	  NETSTACK_MAC.off(1);
+  }
 
   PROCESS_BEGIN();
 
