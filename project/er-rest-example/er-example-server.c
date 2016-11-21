@@ -90,7 +90,7 @@ extern resource_t res_temperature;
 #endif
 
 // For deRFnode specific sensors.
-extern resource_t res_derfnode_tmp102, res_derfnode_battery, res_derfnode_isl29020, res_derfnode_bam150;
+extern resource_t res_derfnode_tmp102, res_derfnode_battery, res_derfnode_isl29020, res_derfnode_bam150, res_rf230_rssi;
 
 /*
 extern resource_t res_battery;
@@ -175,6 +175,7 @@ rest_activate_resource(&res_derfnode_tmp102, "sensors/tmp102_temp");
 rest_activate_resource(&res_derfnode_battery, "sensors/battery");
 rest_activate_resource(&res_derfnode_isl29020, "sensors/luminosity");
 rest_activate_resource(&res_derfnode_bam150, "sensors/acceleration");
+rest_activate_resource(&res_rf230_rssi, "sensors/rssi");
 //SENSORS_ACTIVATE(temperature_sensor);
 
 /*
