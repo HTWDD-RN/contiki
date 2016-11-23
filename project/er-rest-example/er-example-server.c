@@ -65,6 +65,7 @@
  * The build system automatically compiles the resources in the corresponding sub-directory.
  */
 extern resource_t
+  res_system_uptime,
   res_hello,
   res_mirror,
   res_chunks,
@@ -176,6 +177,7 @@ rest_activate_resource(&res_derfnode_battery, "sensors/battery");
 rest_activate_resource(&res_derfnode_isl29020, "sensors/luminosity");
 rest_activate_resource(&res_derfnode_bam150, "sensors/acceleration");
 rest_activate_resource(&res_rf230_rssi, "sensors/rssi");
+rest_activate_resource(&res_system_uptime, "info/uptime");
 //SENSORS_ACTIVATE(temperature_sensor);
 
 /*
