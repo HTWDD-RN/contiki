@@ -17,6 +17,8 @@
 #include "core/dev/radio.h"
 #include "radio/rf230bb/rf230bb.h"
 
+#define MAX_AGE 60
+
 static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 static void res_periodic_handler(void);
 
