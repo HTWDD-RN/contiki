@@ -43,6 +43,7 @@
 #include "contiki-net.h"
 #include "rest-engine.h"
 #include "io_access.h"
+#include "res-system-uptime.h"
 
 #if PLATFORM_HAS_BUTTON
 #include "dev/button-sensor.h"
@@ -65,7 +66,6 @@
  * The build system automatically compiles the resources in the corresponding sub-directory.
  */
 extern resource_t
-  res_system_uptime,
   res_hello,
   res_mirror,
   res_chunks,
@@ -177,6 +177,8 @@ rest_activate_resource(&res_derfnode_battery, "sensors/battery");
 rest_activate_resource(&res_derfnode_isl29020, "sensors/luminosity");
 rest_activate_resource(&res_derfnode_bam150, "sensors/acceleration");
 rest_activate_resource(&res_rf230_rssi, "sensors/rssi");
+
+process_start(&uptime_process, NULL);
 rest_activate_resource(&res_system_uptime, "info/uptime");
 //SENSORS_ACTIVATE(temperature_sensor);
 
