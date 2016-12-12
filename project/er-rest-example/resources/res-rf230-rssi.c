@@ -22,6 +22,8 @@
 static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 static void res_periodic_handler(void);
 
+#define MAX_AGE      60
+
 // Setup periodic ressource for subscription handling.
 PERIODIC_RESOURCE(res_rf230_rssi,
          "title=\"RSSI statistic\";rt=\"RSSI\";obs",

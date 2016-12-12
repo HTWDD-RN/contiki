@@ -43,6 +43,7 @@
 #include "contiki-net.h"
 #include "rest-engine.h"
 #include "io_access.h"
+#include "res-system-uptime.h"
 
 #if PLATFORM_HAS_BUTTON
 #include "dev/button-sensor.h"
@@ -115,7 +116,10 @@ PROCESS_THREAD(er_example_server, ev, data)
    * button 1 (the one closer to the LED's) were held down at boot time.
    * ContikiMac will be used then but radio is always on.
    */
+  uint8_t radio_never_off = 0;
+   
   if (button_pressed(BUTTON_0) == BUTTON_PRESSED) {
+	  radio_never_off = 1;
 	  NETSTACK_MAC.off(1);
   }
 
@@ -176,6 +180,9 @@ rest_activate_resource(&res_derfnode_battery, "sensors/battery");
 rest_activate_resource(&res_derfnode_isl29020, "sensors/luminosity");
 rest_activate_resource(&res_derfnode_bam150, "sensors/acceleration");
 rest_activate_resource(&res_rf230_rssi, "sensors/rssi");
+
+res_system_uptime_init(!radio_never_off);
+rest_activate_resource(&res_system_uptime, "info/uptime");
 //SENSORS_ACTIVATE(temperature_sensor);
 
 /*
