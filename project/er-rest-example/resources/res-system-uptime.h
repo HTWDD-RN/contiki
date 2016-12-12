@@ -4,5 +4,5 @@
  * \author
  *      Alexander Graeb <s74742@htw-dresden.de>
  */
-PROCESS_NAME(uptime_process);
 resource_t res_system_uptime;
+void res_system_uptime_init(uint8_t use_rt);

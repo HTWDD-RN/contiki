@@ -2,6 +2,8 @@
  * \file
  *      System uptime resource. Offers system uptime in days, hours,
  * 		minutes and seconds.
+ * 		KNOWN PROBLEMS: The uptime clock is a little bit inaccurate.
+ * 		We lost around two minutes per day.
  * \author
  *      Alexander Graeb <s74742@htw-dresden.de>
  */
@@ -27,18 +29,17 @@
 static void res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset);
 
 unsigned long uptime_seconds = 0; // ~136.19 years till counter overflow.
+static uint8_t use_rtimer = 1;
 
 #define MAX_AGE      60
 #define RTIMER_CLOCK_T_MAX USHRT_MAX // rtimer_clock_t are currently unsigned short, see core/sys/rtimer.h.
 
 /*---------------------------------------------------------------------------*/
 PROCESS(uptime_process, "Uptime process");
-//AUTOSTART_PROCESSES(&hello_world_process);
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(uptime_process, ev, data)
 {	
   PROCESS_BEGIN();
-  //static unsigned int last = 0;
   rtimer_clock_t rtimer_now;
   static rtimer_clock_t rtimer_delta = 0, rtimer_last = 0;
   unsigned short elapsed_seconds;
@@ -68,6 +69,19 @@ PROCESS_THREAD(uptime_process, ev, data)
 }
 /*---------------------------------------------------------------------------*/	
 
+/* Initiates uptime ressource. Starts process for counting seconds when using rtimer.
+ * Rtimer should be used when using a rdc protocol like ContikiMac, since the normal
+ * clock is'nt running when mcu in sleep mode.
+ */
+void res_system_uptime_init(uint8_t use_rt) {
+	if (use_rt) {
+		use_rtimer = 1;
+		process_start(&uptime_process, NULL);
+	} else {
+		use_rtimer = 0;
+	}
+}
+
 // Setup non-periodic ressource (no subsscription handliing).
 RESOURCE(res_system_uptime,
          "title=\"System uptime\";rt=\"Uptime\";obs",
@@ -82,7 +96,7 @@ res_get_handler(void *request, void *response, uint8_t *buffer, uint16_t preferr
   unsigned int accept = -1;
   REST.get_header_accept(request, &accept);
   
-  unsigned long us = uptime_seconds;
+  unsigned long us = (use_rtimer) ? uptime_seconds : clock_seconds();
   
   unsigned short days = us / (60*60*24UL);
   us -= days * (60*60*24UL);
