@@ -93,6 +93,11 @@ extern resource_t res_temperature;
 // For deRFnode specific sensors.
 extern resource_t res_derfnode_tmp102, res_derfnode_battery, res_derfnode_isl29020, res_derfnode_bam150, res_rf230_rssi;
 
+// For ATmega128RFA1 specific sensors.
+#if PLATFORM_TYPE == ATMEGA128RFA1
+	extern resource_t res_atmega128rfa1_temp;
+#endif
+
 /*
 extern resource_t res_battery;
 #endif
@@ -183,6 +188,12 @@ rest_activate_resource(&res_rf230_rssi, "sensors/rssi");
 
 res_system_uptime_init(!radio_never_off);
 rest_activate_resource(&res_system_uptime, "info/uptime");
+
+// For ATmega128RFA1 specific sensors.
+#if PLATFORM_TYPE == ATMEGA128RFA1
+	rest_activate_resource(&res_atmega128rfa1_temp, "sensors/cpu_temp");
+#endif /* PLATFORM_TYPE == ATMEGA128RFA1 */
+
 //SENSORS_ACTIVATE(temperature_sensor);
 
 /*
