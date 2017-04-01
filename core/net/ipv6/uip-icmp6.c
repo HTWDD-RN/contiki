@@ -120,6 +120,12 @@ uip_icmp6_register_input_handler(uip_icmp6_input_handler_t *handler)
 static void
 echo_request_input(void)
 {
+
+// s74742@htw-dresden.de: Switch on LED D2.
+#ifdef INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3
+	PORTE&=~(1<<PE3);
+#endif /* INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3 */
+
   /*
    * we send an echo reply. It is trivial if there was no extension
    * headers in the request otherwise we need to remove the extension
@@ -176,6 +182,12 @@ echo_request_input(void)
   PRINT6ADDR(&UIP_IP_BUF->srcipaddr);
   PRINTF("\n");
   UIP_STAT(++uip_stat.icmp.sent);
+
+// s74742@htw-dresden.de: Switch off LED D2.
+#ifdef INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3
+  PORTE|=(1<<PE3);
+#endif /* INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3 */
+
   return;
 }
 /*---------------------------------------------------------------------------*/

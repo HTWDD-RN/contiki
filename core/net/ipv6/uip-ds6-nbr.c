@@ -111,6 +111,12 @@ uip_ds6_nbr_add(const uip_ipaddr_t *ipaddr, const uip_lladdr_t *lladdr,
     PRINTLLADDR(lladdr);
     PRINTF(" state %u\n", state);
     NEIGHBOR_STATE_CHANGED(nbr);
+
+    /* s74742@htw-dresden.de: Neighbor was found. => Switch off LED D3 */
+    #ifdef NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4
+    	PORTE|=(1<<PE4);
+    #endif /* NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4 */
+
     return nbr;
   } else {
     PRINTF("uip_ds6_nbr_add drop ip addr ");

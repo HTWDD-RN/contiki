@@ -90,6 +90,12 @@
 
 #include "net/rime/rime.h"
 
+#include "usb.h"
+#include "dev/adc.h"
+#include "twi_master.h"
+#include "i2c_sensors_interface.h"
+#include "io_access.h"
+
 /* Track interrupt flow through mac, rdc and radio driver */
 //#define DEBUGFLOWSIZE 32
 #if DEBUGFLOWSIZE
@@ -170,9 +176,40 @@ rng_get_uint8(void) {
 /*------Done in a subroutine to keep main routine stack usage small--------*/
 void initialize(void)
 {
+/*
+ * s74742@htw-dresden.de: Configure the clock prescaler to divide the clock speed by 2, 4, 8, ...
+ */
+#ifdef SET_CLOCK_PRESCALER_REGISTER
+  uint8_t volatile saved_sreg = SREG; // Save interrupt state (enabled or disabled).
+  cli(); // Disable all interrupts.
+  CLKPR = (1<<CLKPCE); // The CLKPR must be written twice within ...
+  CLKPR = SET_CLOCK_PRESCALER_REGISTER; // ... two cpu cycles to take effect.
+  SREG = saved_sreg; // Set interrupt state back to that it was before we disabled them.
+#endif /* SET_CLOCK_PRESCALER_REGISTER */
+
   watchdog_init();
   watchdog_start();
 
+#ifdef DE_RF_NODE
+/* s74742@htw-dresden.de: Using the USB connector on deRFnode board to let the node send debugging messages through. */
+#ifdef DE_RF_NODE_USB_DEBUG
+  /* Only do this, if a computer is connected to the USB port (respectively power comes from USB). To check that, we
+   * can monitor Port PF1 (see deRFnode and deRFgateway user manual, chapter 8.9 - USB supply voltage monitoring).
+   */
+  if (readADC(PF1)) {
+    usb_io_init();
+  }
+#endif /* DE_RF_NODE_USB_DEBUG */
+
+	/*  initialize TWI interface and connected sensors */
+	TWI_MasterInit();
+
+	BMA150_Init();
+	ISL29020_Init();
+	TMP102_Init();
+	
+	io_init(); // Initialize helper functions for LEDs and buttons of deRFnode board (see io_access.[c|h]).
+#else /* DE_RF_NODE */
 /* The Raven implements a serial command and data interface via uart0 to a 3290p,
  * which could be duplicated using another host computer.
  */
@@ -188,12 +225,40 @@ void initialize(void)
 
   /* Second rs232 port for debugging or slip alternative */
   rs232_init(RS232_PORT_1, USART_BAUD_57600,USART_PARITY_NONE | USART_STOP_BITS_1 | USART_DATA_BITS_8);
-  /* Redirect stdout */
+
+/* Redirect stdout */
 #if RF230BB_CONF_LEDONPORTE1 || defined(RAVEN_LCD_INTERFACE)
   rs232_redirect_stdout(RS232_PORT_1);
 #else
   rs232_redirect_stdout(RS232_PORT_0);
 #endif
+#endif /* DE_RF_NODE */
+
+/*
+ * s74742@htw-dresden.de: Utilize LED D1 on deRFnode board from
+ * Dresden Elektronik to indicate active radio module.
+ */
+#ifdef RADIO_INDICATOR_LED_ON_PORT_G5
+  DDRG|=(1<<DDG5);
+  PORTG&=~(1<<PG5);
+#endif /* RADIO_INDICATOR_LED_ON_PORT_G5 */
+
+/*
+* s74742@htw-dresden.de: Utilize LED D2 to indicate incoming ping requests.
+*/
+#ifdef INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3
+	DDRE|=(1<<DDE3);
+	PORTE|=(1<<PE3);
+#endif /* INCOMING_PING6_REQUESTS_INDICATOR_LED_ON_PORT_E3 */
+
+/*
+* s74742@htw-dresden.de: Utilize LED D3 to indicate that a neighbor was found.
+*/
+#ifdef NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4
+	DDRE|=(1<<DDE4);
+	PORTE&=~(1<<PE4);
+#endif /* NEIGHBOR_FOUND_INDICATOR_LED_ON_PORT_E4 */
+
   clock_init();
 
   if(MCUSR & (1<<PORF )) PRINTD("Power-on reset.\n");

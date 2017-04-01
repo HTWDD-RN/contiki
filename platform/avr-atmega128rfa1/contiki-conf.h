@@ -44,9 +44,20 @@
 /* Platform name, type, and MCU clock rate */
 #define PLATFORM_NAME  "RFA1"
 #define PLATFORM_TYPE  ATMEGA128RFA1
-#ifndef F_CPU
+
+/*s74742@htw-dresden.de: There's no need to define cpu frequency here since it's already defined in platform make file.*/
+/*#ifndef F_CPU
 #define F_CPU          16000000UL
-#endif
+#endif*/
+
+/*
+ * s74742@htw-dresden.de:
+ * We are currently using the 16 MHz Transceiver Crystal Oscillator as clock source (Low-Fuse-Byte: 0xD7).
+ * Set the prescaler such that the cpu clock speed will be 8 HMz (divide clock source speed by 2).
+ * So we get better results with ContikiMac, but don't figured out why so fare.
+ * If changing that, don't forget to adjust -DF_CPU parameter in Makefile.avr-atmega128rfa1.
+ */
+//#define SET_CLOCK_PRESCALER_REGISTER 1
 
 #include <stdint.h>
 
@@ -126,6 +137,9 @@ typedef unsigned short uip_stats_t;
 /* 1 - 15 maps into -90 to -48 dBm; the register is written with RF230_MIN_RX_POWER/6 + 1. Undefine for -100dBm sensitivity */
 //#define RF230_MIN_RX_POWER        0
 
+// Using carrier sense in cca check dramatically improves connection quality when using mac protocols.
+#define RF230_CONF_CCA_CARRIER_SENSE_ONLY 1
+
 /* Network setup */
 /* TX routine passes the cca/ack result in the return parameter */
 #define RDC_CONF_HARDWARE_ACK    1
@@ -173,8 +187,11 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_TCP_SPLIT       1
 #define UIP_CONF_DHCP_LIGHT      1
 
+/* s74742@htw-dresden.de: Added this line. Otherwiese project er-rest-example wont compile. */
+#define UIP_CONF_BUFFER_SIZE 240
 
-#if 1 /* No radio cycling */
+/* s74742@htw-dresden.de: Radio cycling activated (1 -> 0). */
+#if 0 /* No radio cycling */
 
 #define NETSTACK_CONF_MAC         nullmac_driver
 #define NETSTACK_CONF_RDC         sicslowmac_driver
@@ -231,11 +248,15 @@ typedef unsigned short uip_stats_t;
 #define CONTIKIMAC_FRAMER_CONF_SHORTEST_PACKET_SIZE   43-18  //multicast RPL DIS length
 /* Not tested much yet */
 #define WITH_PHASE_OPTIMIZATION                0
+//#define CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION	0
 #define CONTIKIMAC_CONF_COMPOWER               1
-#define RIMESTATS_CONF_ENABLED                 1
 
+/* s74742@htw-dresden.de: Leads to compilation errors. Therefore disabled (1 -> 0). */
+#define RIMESTATS_CONF_ENABLED                 0
+
+/* s74742@htw-dresden.de: Changed framer802154 to framer_802154. Otherwise we get an compilation error. */
 #if NETSTACK_CONF_WITH_IPV6
-#define NETSTACK_CONF_FRAMER      framer802154
+#define NETSTACK_CONF_FRAMER      framer_802154
 #else /* NETSTACK_CONF_WITH_IPV6 */
 #define NETSTACK_CONF_FRAMER      contikimac_framer
 #endif /* NETSTACK_CONF_WITH_IPV6 */
@@ -268,6 +289,11 @@ typedef unsigned short uip_stats_t;
 #define UIP_CONF_DS6_MADDR_NBU    0
 #define UIP_CONF_DS6_AADDR_NBU    0
 
+/* s74742@htw-dresden.de: Fast sleep disabled for better results. */
+#define WITH_FAST_SLEEP 0
+
+/* Disable ContikiMac wake cycle to save even more energy. */
+#define CONTIKIMAC_CONF_NO_WAKE_CYCLE 1
 
 #elif 1  /* cx-mac radio cycling */
 /* RF230 does clear-channel assessment in extended mode (autoretries>0) */

@@ -603,6 +603,11 @@ radio_on(void)
 #if RF230BB_CONF_LEDONPORTE1
     PORTE|=(1<<PE1); //ledon
 #endif
+
+#if RADIO_INDICATOR_LED_ON_PORT_G5
+	PORTG&=~(1<<PG5);
+#endif /* RADIO_INDICATOR_LED_ON_PORT_G5 */
+
 #if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega128RFR2__) || defined(__AVR_ATmega256RFR2__)
     /* Use the poweron interrupt for delay */
     rf230_wakewait=1;
@@ -652,6 +657,11 @@ radio_off(void)
 #if RF230BB_CONF_LEDONPORTE1
   PORTE&=~(1<<PE1); //ledoff
 #endif
+
+#if RADIO_INDICATOR_LED_ON_PORT_G5
+	PORTG|=(1<<PG5);
+#endif /* RADIO_INDICATOR_LED_ON_PORT_G5 */
+
 #ifdef RF230BB_HOOK_RADIO_OFF
   RF230BB_HOOK_RADIO_OFF();
 #endif
@@ -960,6 +970,11 @@ rf230_transmit(unsigned short payload_len)
 #if RF230BB_CONF_LEDONPORTE1
     PORTE|=(1<<PE1); //ledon
 #endif
+
+#if RADIO_INDICATOR_LED_ON_PORT_G5
+	PORTG&=~(1<<PG5);
+#endif /* RADIO_INDICATOR_LED_ON_PORT_G5 */
+
     rf230_wakewait=1;
 	  hal_set_slptr_low();
     {
@@ -1693,6 +1708,10 @@ rf230_cca(void)
   /* Use the current mode. Note triggering a manual CCA is not recommended in extended mode */
 //hal_subregister_write(SR_CCA_MODE,1);
 
+#ifdef RF230_CONF_CCA_CARRIER_SENSE_ONLY
+  hal_subregister_write(SR_CCA_MODE, 2);
+#endif /* RF230_CONF_CCA_CARRIER_SENSE_ONLY */
+
   /* Start the CCA, wait till done, return result */
   /* Note reading the TRX_STATUS register clears both CCA_STATUS and CCA_DONE bits */
 #if defined(__AVR_ATmega128RFA1__) || defined(__AVR_ATmega128RFR2__) || defined(__AVR_ATmega256RFR2__)
@@ -1708,6 +1727,18 @@ rf230_cca(void)
    radio_set_trx_state(RX_ON);
 
     rf230_ccawait=1;
+
+#ifdef RF230_CONF_CCA_CARRIER_SENSE_ONLY
+    {
+		uint8_t volatile saved_sreg = SREG;
+		sei();
+		hal_subregister_write(SR_CCA_REQUEST, 1);
+		while (rf230_ccawait) {} // Wird per interrupt routine in der Datei halbb.c gesetzt.
+		SREG = saved_sreg;
+	}
+
+    if(hal_subregister_read(SR_CCA_STATUS)) cca=0xff; // 1 = channel clear, 0 = channel bussy
+#else /* RF230_CONF_CCA_CARRIER_SENSE_ONLY */
 //CCA_REQUEST is supposed to trigger the interrupt but it doesn't
 //  hal_subregister_write(SR_CCA_REQUEST,1);
 
@@ -1726,6 +1757,8 @@ rf230_cca(void)
 #else
     if (hal_register_read(RG_PHY_ED_LEVEL)<(91-77)) cca=0xff;
 #endif
+#endif /* RF230_CONF_CCA_CARRIER_SENSE_ONLY */
+
 //TODO:see if the status register works!
 //   cca=hal_register_read(RG_TRX_STATUS);
 #if RF230_CONF_AUTOACK

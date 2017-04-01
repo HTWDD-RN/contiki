@@ -479,9 +479,16 @@ powercycle(struct rtimer *t, void *ptr)
           break;
         }
 
-        schedule_powercycle(t, CCA_CHECK_TIME + CCA_SLEEP_TIME);
-        PT_YIELD(&pt);
+        /*
+         * s74742@htw-dresden.de: Fixed problem with high packet loss due to
+         * long off time of radio module by commenting out those two lines.
+         * TODO: Figure out, why that solves the problem. Does it have any
+         * negative side effects?
+         */
+        /*schedule_powercycle(t, CCA_CHECK_TIME + CCA_SLEEP_TIME);
+        PT_YIELD(&pt);*/
       }
+
       if(radio_is_on) {
         if(!(NETSTACK_RADIO.receiving_packet() ||
              NETSTACK_RADIO.pending_packet()) ||
@@ -500,7 +507,15 @@ powercycle(struct rtimer *t, void *ptr)
       ensure an occasional wake cycle or foreground processing will
       be blocked until a packet is detected */
 #if RDC_CONF_MCU_SLEEP
-
+	// Wake cycle could be disabled to save even more energy.
+#if CONTIKIMAC_CONF_NO_WAKE_CYCLE
+      if(!we_are_sending && !radio_is_on) {
+        rtimer_arch_sleep(CYCLE_TIME - (RTIMER_NOW() - cycle_start));
+      } else {
+        schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
+        PT_YIELD(&pt);
+      }
+#else // CONTIKIMAC_CONF_NO_WAKE_CYCLE
       static uint8_t sleepcycle;
       if((sleepcycle++ < 16) && !we_are_sending && !radio_is_on) {
         rtimer_arch_sleep(RTIMER_NOW() - cycle_start);
@@ -509,10 +524,12 @@ powercycle(struct rtimer *t, void *ptr)
         schedule_powercycle_fixed(t, cycle_start);
         PT_YIELD(&pt);
       }
-#else
-      schedule_powercycle_fixed(t, cycle_start);
+#endif // CONTIKIMAC_CONF_NO_WAKE_CYCLE
+#else // RDC_CONF_MCU_SLEEP
+// release 3.1 ->      schedule_powercycle_fixed(t, cycle_start);
+      schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
       PT_YIELD(&pt);
-#endif
+#endif // RDC_CONF_MCU_SLEEP
     }
   }
 
