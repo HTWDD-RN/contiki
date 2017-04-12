@@ -17,11 +17,11 @@ CONTIKI_PLAT_DEFS = -DF_CPU=16000000UL -DAUTO_CRC_PADDING=2
 MCU=atmega128rfa1
 
 #
-# s74742@htw-dresden.de:
-# Anpassen von AVRDUDE_PROGRAMMER und AVRDUDE_PORT, um den AVR-Dragon zu verwenden.
+# Programmer should be set in avrdude configuration file (e.g. add line
+# 'default_programmer = "dragon_jtag";' in ~/.avrduderc), so that every developer
+# can use his own programmer without recurrent conflicts in this file.
 #
 #AVRDUDE_PROGRAMMER=jtag2
-AVRDUDE_PROGRAMMER=dragon_jtag
 
 # For usb devices, you may either use PORT=usb, or (e.g. if you have more than one
 # programmer connected) you can use the following trick to find out the serial number:
