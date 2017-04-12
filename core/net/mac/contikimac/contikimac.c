@@ -391,9 +391,10 @@ advance_cycle_start(void)
 
     cycle_start = sync_cycle_start + phase_time/NETSTACK_RDC_CHANNEL_CHECK_RATE;
   }
-  #endif
+  #else //SYNC_CYCLE_STARTS
 
   cycle_start += CYCLE_TIME;
+  #endif //SYNC_CYCLE_STARTS
 }
 /*---------------------------------------------------------------------------*/
 static char
@@ -510,9 +511,9 @@ powercycle(struct rtimer *t, void *ptr)
 	// Wake cycle could be disabled to save even more energy.
 #if CONTIKIMAC_CONF_NO_WAKE_CYCLE
       if(!we_are_sending && !radio_is_on) {
-        rtimer_arch_sleep(CYCLE_TIME - (RTIMER_NOW() - cycle_start));
+		rtimer_arch_sleep(cycle_start - RTIMER_NOW());
       } else {
-        schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
+		schedule_powercycle_fixed(t, cycle_start);
         PT_YIELD(&pt);
       }
 #else // CONTIKIMAC_CONF_NO_WAKE_CYCLE
@@ -526,8 +527,7 @@ powercycle(struct rtimer *t, void *ptr)
       }
 #endif // CONTIKIMAC_CONF_NO_WAKE_CYCLE
 #else // RDC_CONF_MCU_SLEEP
-// release 3.1 ->      schedule_powercycle_fixed(t, cycle_start);
-      schedule_powercycle_fixed(t, CYCLE_TIME + cycle_start);
+	schedule_powercycle_fixed(t, cycle_start);
       PT_YIELD(&pt);
 #endif // RDC_CONF_MCU_SLEEP
     }
