@@ -420,8 +420,11 @@ powercycle(struct rtimer *t, void *ptr)
         }
         powercycle_turn_radio_off();
       }
-      schedule_powercycle_fixed(t, RTIMER_NOW() + CCA_SLEEP_TIME);
-      PT_YIELD(&pt);
+      
+      if (count < CCA_COUNT_MAX - 1) {
+		  schedule_powercycle_fixed(t, RTIMER_NOW() + CCA_SLEEP_TIME);
+		  PT_YIELD(&pt);
+      }
     }
 
     if(packet_seen) {
